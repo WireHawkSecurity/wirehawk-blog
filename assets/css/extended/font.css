@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ── Base Typography ── */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -8,13 +9,6 @@ body {
   font-size: 1.05rem;
   line-height: 1.75;
   letter-spacing: -0.01em;
-}
-
-code,
-pre code,
-.highlight code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 0.88rem;
 }
 
 .post-title {
@@ -26,6 +20,44 @@ h1, h2, h3 {
   letter-spacing: -0.02em;
 }
 
+/* ── Section Spacing ── */
+.post-content h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #333;
+}
+
+/* ── Code Blocks ── */
+code,
+pre code,
+.highlight code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.88rem;
+}
+
+.post-content pre {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+}
+
+.post-content code:not(pre code) {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* ── Images ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1.5rem 0;
+}
+
+/* ── Links ── */
 a:hover {
   color: #D4342A;
 }
@@ -34,6 +66,7 @@ a:hover {
   border-color: #D4342A;
 }
 
+/* ── Header Spacing ── */
 .breadcrumbs {
   margin-bottom: 1.25rem;
 }
@@ -45,4 +78,46 @@ a:hover {
 
 .post-meta {
   margin-top: 0.75rem;
+}
+
+/* ── Table of Contents ── */
+.toc {
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* ── Post List Cards ── */
+.post-entry {
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .post-content {
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .post-content pre {
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    border-radius: 6px;
+  }
+
+  .post-content h2 {
+    margin-top: 2rem;
+    font-size: 1.35rem;
+  }
+
+  .post-content img {
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+
+  .toc {
+    padding: 0.75rem 1rem;
+  }
 }
