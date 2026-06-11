@@ -2,6 +2,8 @@
 title: "About"
 layout: "single"
 showtoc: false
+_build:
+  list: never
 ---
 
 Information security professional with a focus on penetration testing and offensive security. This blog covers offensive security topics through detailed walkthroughs that break down full attack chains from initial access to compromise.
