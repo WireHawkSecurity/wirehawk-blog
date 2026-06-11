@@ -2,7 +2,7 @@
 title: "About"
 layout: "single"
 showtoc: false
-_build:
+build:
   list: never
 ---
 
