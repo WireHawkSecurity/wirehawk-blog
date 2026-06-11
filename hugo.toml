@@ -1,0 +1,84 @@
+baseURL = "https://blog.wirehawksecurity.com/"
+languageCode = "en-us"
+title = "WireHawk Security"
+theme = "PaperMod"
+
+[pagination]
+  pagerSize = 10
+
+[outputs]
+  home = ["HTML", "RSS"]
+
+[taxonomies]
+  category = "categories"
+  tag = "tags"
+
+[params]
+  env = "production"
+  description = "Information security blog focused on penetration testing and offensive security. Detailed walkthroughs covering tools, techniques, tactics, and methodology."
+  author = "0xB1rd"
+  defaultTheme = "dark"
+  disableThemeToggle = true
+  showReadingTime = true
+  showShareButtons = false
+  showPostNavLinks = true
+  showBreadCrumbs = true
+  showCodeCopyButtons = true
+  showtoc = true
+  tocopen = false
+  comments = false
+  hideFooter = false
+
+  [params.cover]
+    linkFullImages = true
+    responsiveImages = true
+
+  [params.homeInfoParams]
+    Title = "WireHawk Security"
+    Content = "Offensive security walkthroughs covering full attack chains from initial access to compromise. Written by 0xB1rd."
+
+  # ── Update these URLs with your actual profiles ──
+  [[params.socialIcons]]
+    name = "x"
+    url = "https://x.com/WireHawkSec"
+  [[params.socialIcons]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/company/wirehawk-security"
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/WireHawkSecurity"
+  [[params.socialIcons]]
+    name = "rss"
+    url = "/index.xml"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+    weight = 1
+  [[menu.main]]
+    identifier = "categories"
+    name = "Platforms"
+    url = "/categories/"
+    weight = 2
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags"
+    url = "/tags/"
+    weight = 3
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 4
+
+[markup]
+  [markup.highlight]
+    style = "monokai"
+    lineNos = false
+    guessSyntax = false
+    noClasses = true
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
