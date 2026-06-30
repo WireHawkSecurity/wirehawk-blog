@@ -1,0 +1,199 @@
+/* ===================================================================
+   WireHawk Security — Table of Contents
+   assets/css/extended/toc.css
+
+   Rendered HTML (PaperMod latest):
+     <details class="toc">
+       <summary><span class="title">Table of Contents</span></summary>
+       <div class="inner"><ul><li><a>…</a></li></ul></div>
+     </details>
+
+   Breakpoints:
+     Base ............ inline ToC (tablet + mobile fallback)
+     ≥1440px ........ fixed sidebar, compact sizing
+     ≤768px ......... force inline, reset any fixed props
+   =================================================================== */
+
+
+/* ── Base Card (inline display for tablet / mobile) ── */
+
+details.toc {
+    border-radius: 6px;
+    padding: 0;
+    margin-bottom: 2rem;
+    border-left: 3px solid #333333;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    background: #131313;
+}
+
+
+/* ── Summary Bar ── */
+
+details.toc summary {
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #c0c0c0;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    margin-inline-start: 0;
+}
+
+/* Remove native disclosure triangle */
+details.toc summary::-webkit-details-marker {
+    display: none;
+}
+
+details.toc summary::marker {
+    content: "";
+    display: none;
+}
+
+details.toc summary .title {
+    display: inline;
+    font-weight: 700;
+    margin-inline-start: 0;
+}
+
+/* Custom chevron */
+details.toc summary .title::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 8px;
+    vertical-align: middle;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #666;
+    transition: transform 0.2s ease;
+}
+
+details.toc[open] summary .title::after {
+    transform: rotate(180deg);
+}
+
+
+/* ── Inner Content ── */
+
+details.toc .inner {
+    padding: 4px 0 8px;
+    margin: 0;
+    border-top: 1px solid #222222;
+}
+
+
+/* ── List Reset ── */
+
+details.toc .inner ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+details.toc .inner li {
+    margin: 0;
+}
+
+details.toc .inner li ul {
+    margin-inline-start: 0;
+}
+
+
+/* ── Links ── */
+
+details.toc .inner a {
+    display: block;
+    padding: 5px 1rem 5px 14px;
+    line-height: 1.5;
+    color: #888888;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    box-shadow: none;
+    transition: color 0.15s ease,
+                border-color 0.15s ease,
+                background-color 0.15s ease;
+}
+
+details.toc .inner a:hover {
+    color: #D44035;
+    border-left-color: #D44035;
+    background-color: rgba(212, 64, 53, 0.04);
+    text-decoration: none;
+    box-shadow: none;
+}
+
+
+/* ── Active Section (set by scroll-spy) ── */
+
+details.toc .inner a.active {
+    color: #c0c0c0;
+    border-left-color: #D44035;
+    font-weight: 600;
+}
+
+
+/* ── Desktop Sidebar (≥1440px) ── */
+
+@media (min-width: 1440px) {
+    details.toc {
+        position: fixed;
+        top: 5rem;
+        left: calc(50% + 420px);
+        right: auto;
+        width: 220px;
+        max-height: calc(100vh - 7rem);
+        overflow-y: auto;
+        margin-bottom: 0;
+        padding: 0;
+        background: #131313;
+        border: 1px solid #222222;
+        border-left: 3px solid #333333;
+        border-radius: 6px;
+        z-index: 10;
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+    }
+
+    details.toc summary {
+        font-size: 0.75rem;
+    }
+
+    details.toc .inner a {
+        padding: 4px 1rem 4px 14px;
+        font-size: 0.8rem;
+    }
+
+    details.toc::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    details.toc::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    details.toc::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 2px;
+    }
+}
+
+
+/* ── Mobile (≤768px) ── */
+
+@media (max-width: 768px) {
+    details.toc {
+        position: static !important;
+        width: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        border: none !important;
+        border-left: 3px solid #333333 !important;
+        background: #131313;
+        padding: 0;
+    }
+}
