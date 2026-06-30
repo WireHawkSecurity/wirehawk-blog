@@ -1,0 +1,124 @@
+{{- if and .IsPage (eq .Section "posts") }}
+<div class="reading-progress" id="reading-progress"></div>
+<div class="lightbox-overlay" id="lightbox-overlay" role="dialog" aria-label="Image preview" aria-hidden="true">
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+(function () {
+  // Reading progress bar
+  var bar = document.getElementById('reading-progress');
+  if (bar) {
+    window.addEventListener('scroll', function () {
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight > 0) {
+        bar.style.width = (window.scrollY / docHeight * 100) + '%';
+      }
+    }, { passive: true });
+  }
+
+  // Auto-open TOC on desktop where fixed sidebar is active
+  if (window.innerWidth >= 1440) {
+    var tocEl = document.querySelector('details.toc');
+    if (tocEl) tocEl.setAttribute('open', '');
+  }
+
+  // ToC scroll-spy: highlights the active section as the reader scrolls
+  (function () {
+    var tocInner = document.querySelector('details.toc .inner');
+    if (!tocInner) return;
+
+    var links = tocInner.querySelectorAll('a[href^="#"]');
+    if (!links.length) return;
+
+    var sections = [];
+    links.forEach(function (link) {
+      var id = link.getAttribute('href');
+      if (!id || id.length < 2) return;
+      var el = document.getElementById(id.slice(1));
+      if (el) sections.push({ link: link, el: el });
+    });
+
+    if (!sections.length) return;
+
+    function update() {
+      var scrollPos = window.scrollY + 120;
+      var current = sections[0];
+
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].el.offsetTop <= scrollPos) {
+          current = sections[i];
+        }
+      }
+
+      links.forEach(function (l) { l.classList.remove('active'); });
+      if (current) current.link.classList.add('active');
+    }
+
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(function () {
+          update();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+
+    update();
+  })();
+
+  // Image lightbox
+  var overlay = document.getElementById('lightbox-overlay');
+  var lbImg = document.getElementById('lightbox-img');
+  if (overlay && lbImg) {
+    function openLightbox(src, alt) {
+      lbImg.src = src;
+      lbImg.alt = alt;
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.post-content p > img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        openLightbox(img.src, img.alt);
+      });
+    });
+
+    overlay.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+  }
+
+  // Subscribe CTA on post pages
+  if (window.location.pathname.indexOf('/posts/') !== -1) {
+    var postContent = document.querySelector('.post-content');
+    if (postContent) {
+      var cta = document.createElement('div');
+      cta.className = 'subscribe-cta';
+      cta.innerHTML = 'Never miss a post. <a href="/subscribe/">Subscribe for updates</a>.';
+      postContent.appendChild(cta);
+    }
+  }
+})();
+</script>
+{{- end }}
+
+<script>
+window.addEventListener('pageshow', function (e) {
+  if (e.persisted) window.scrollTo(0, 0);
+});
+</script>

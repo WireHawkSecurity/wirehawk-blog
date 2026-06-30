@@ -1,0 +1,297 @@
+{{- define "main" }}
+
+<header class="page-header">
+  {{ partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{- if .Description }}
+  <div class="post-description">
+    {{ .Description | markdownify }}
+  </div>
+  {{- end }}
+</header>
+
+<div id="explore-app">
+
+  <div class="explore-search-wrap">
+    <svg class="explore-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="explore-search" type="search" placeholder="Search posts..." id="exploreSearch" autocomplete="off" aria-label="Search posts" />
+  </div>
+
+  <div class="explore-filters">
+
+    <div class="explore-filter-group" id="platformGroup" role="group" aria-label="Filter by platform">
+      <div class="explore-filter-label" id="platformLabel">Platform</div>
+      <div class="explore-chips" id="platformChips"></div>
+    </div>
+
+    <div class="explore-filter-group" id="tagGroup" role="group" aria-label="Filter by tag">
+      <div class="explore-filter-label" id="tagLabel">Tag</div>
+      <div class="explore-chips" id="tagChips"></div>
+    </div>
+
+    <div class="explore-filter-group" id="diffGroup" role="group" aria-label="Filter by difficulty">
+      <div class="explore-filter-label" id="diffLabel">Difficulty</div>
+      <div class="explore-chips" id="diffChips"></div>
+      <div class="explore-filter-note" id="diffNote">Not applicable for resource posts.</div>
+    </div>
+
+  </div>
+
+  <hr class="explore-divider" />
+
+  <div class="explore-results-header">
+    <span class="explore-results-count" id="resultsCount"></span>
+    <button class="explore-clear-btn" id="clearBtn" type="button">Clear filters</button>
+  </div>
+
+  <div id="postList"></div>
+
+  <div class="explore-empty" id="emptyState">
+    <p>No posts match the current filters. <button type="button" class="explore-clear-link" id="clearLink">Clear all filters</button></p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var posts = [
+    {{- $pages := where site.RegularPages "Section" "posts" }}
+    {{- range $i, $p := $pages }}
+    {{- if $i }},{{ end }}
+    {
+      "title": {{ .Title | jsonify | safeJS }},
+      "summary": {{ with .Params.summary }}{{ . | jsonify | safeJS }}{{ else }}{{ .Summary | plainify | htmlUnescape | jsonify | safeJS }}{{ end }},
+      "permalink": {{ .RelPermalink | jsonify | safeJS }},
+      "date": {{ .Date.Format "January 2, 2006" | jsonify | safeJS }},
+      "readingTime": {{ .ReadingTime }},
+      "platforms": {{ .Params.platforms | default slice | jsonify | safeJS }},
+      "tags": {{ .Params.tags | default slice | jsonify | safeJS }},
+      "difficulty": {{ .Params.difficulty | default "" | jsonify | safeJS }}
+    }
+    {{- end }}
+  ];
+
+  var activeFilters = { platform: [], tag: [], diff: [] };
+
+  var diffGroupEl = document.getElementById('diffGroup');
+  var diffNoteEl = document.getElementById('diffNote');
+  var postListEl = document.getElementById('postList');
+  var resultsEl = document.getElementById('resultsCount');
+  var emptyEl = document.getElementById('emptyState');
+  var clearBtn = document.getElementById('clearBtn');
+  var clearLink = document.getElementById('clearLink');
+  var searchInput = document.getElementById('exploreSearch');
+
+  function collectValues(key) {
+    var values = {};
+    posts.forEach(function (p) {
+      var arr = key === 'difficulty' ? (p.difficulty ? [p.difficulty] : []) : p[key] || [];
+      arr.forEach(function (v) {
+        values[v] = (values[v] || 0) + 1;
+      });
+    });
+    return values;
+  }
+
+  var diffOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+
+  function buildChips(containerId, filterKey, values, sortFn) {
+    var container = document.getElementById(containerId);
+    var keys = Object.keys(values);
+    if (sortFn) keys.sort(sortFn);
+    else keys.sort();
+
+    keys.forEach(function (val) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'explore-chip';
+      if (filterKey === 'diff') chip.classList.add('explore-chip-diff-' + val.toLowerCase());
+      chip.setAttribute('data-filter', filterKey);
+      chip.setAttribute('data-value', val);
+      chip.setAttribute('aria-pressed', 'false');
+
+      var label = document.createTextNode(val);
+      chip.appendChild(label);
+
+      var count = document.createElement('span');
+      count.className = 'explore-chip-count';
+      count.textContent = values[val];
+      chip.appendChild(count);
+
+      chip.addEventListener('click', function () { toggleChip(chip); });
+      container.appendChild(chip);
+    });
+  }
+
+  var platformValues = collectValues('platforms');
+  var tagValues = collectValues('tags');
+  var diffValues = collectValues('difficulty');
+
+  buildChips('platformChips', 'platform', platformValues);
+  buildChips('tagChips', 'tag', tagValues);
+  buildChips('diffChips', 'diff', diffValues, function (a, b) {
+    return (diffOrder[a] || 99) - (diffOrder[b] || 99);
+  });
+
+  function toggleChip(el) {
+    var filter = el.getAttribute('data-filter');
+    var value = el.getAttribute('data-value');
+    var idx = activeFilters[filter].indexOf(value);
+    if (idx > -1) {
+      activeFilters[filter].splice(idx, 1);
+      el.classList.remove('selected');
+      el.setAttribute('aria-pressed', 'false');
+    } else {
+      activeFilters[filter].push(value);
+      el.classList.add('selected');
+      el.setAttribute('aria-pressed', 'true');
+    }
+    updateDiffVisibility();
+    renderPosts();
+  }
+
+  function updateDiffVisibility() {
+    var tags = activeFilters.tag;
+    var onlyResources = tags.length > 0 && tags.every(function (t) { return t === 'Resources'; });
+
+    if (onlyResources) {
+      diffGroupEl.classList.add('explore-filter-faded');
+      diffNoteEl.classList.add('visible');
+      activeFilters.diff = [];
+      document.querySelectorAll('[data-filter="diff"]').forEach(function (c) {
+        c.classList.remove('selected');
+        c.setAttribute('aria-pressed', 'false');
+      });
+    } else {
+      diffGroupEl.classList.remove('explore-filter-faded');
+      diffNoteEl.classList.remove('visible');
+    }
+  }
+
+  function matchesFilter(post) {
+    if (activeFilters.platform.length > 0) {
+      var postPlatforms = post.platforms || [];
+      var platformMatch = activeFilters.platform.some(function (f) {
+        return postPlatforms.indexOf(f) > -1;
+      });
+      if (!platformMatch) return false;
+    }
+
+    if (activeFilters.tag.length > 0) {
+      var postTags = post.tags || [];
+      var tagMatch = activeFilters.tag.some(function (f) {
+        return postTags.indexOf(f) > -1;
+      });
+      if (!tagMatch) return false;
+    }
+
+    if (activeFilters.diff.length > 0) {
+      if (!post.difficulty || activeFilters.diff.indexOf(post.difficulty) === -1) return false;
+    }
+
+    var query = searchInput.value.toLowerCase().trim();
+    if (query) {
+      var haystack = [
+        post.title,
+        post.summary,
+        (post.platforms || []).join(' '),
+        (post.tags || []).join(' '),
+        post.difficulty || ''
+      ].join(' ').toLowerCase();
+
+      var words = query.split(/\s+/);
+      var allMatch = words.every(function (w) { return haystack.indexOf(w) > -1; });
+      if (!allMatch) return false;
+    }
+
+    return true;
+  }
+
+  function diffBadgeClass(diff) {
+    if (diff === 'Easy') return 'explore-badge-easy';
+    if (diff === 'Medium') return 'explore-badge-medium';
+    if (diff === 'Hard') return 'explore-badge-hard';
+    return '';
+  }
+
+  function renderPosts() {
+    var filtered = posts.filter(matchesFilter);
+    postListEl.innerHTML = '';
+
+    filtered.forEach(function (post) {
+      var card = document.createElement('a');
+      card.href = post.permalink;
+      card.className = 'explore-post-card';
+
+      var title = document.createElement('div');
+      title.className = 'explore-post-title';
+      title.textContent = post.title;
+
+      var summary = document.createElement('div');
+      summary.className = 'explore-post-summary';
+      summary.textContent = post.summary;
+
+      var meta = document.createElement('div');
+      meta.className = 'explore-post-meta';
+
+      (post.platforms || []).forEach(function (p) {
+        var badge = document.createElement('span');
+        badge.className = 'explore-badge explore-badge-platform';
+        badge.textContent = p;
+        meta.appendChild(badge);
+      });
+
+      (post.tags || []).forEach(function (t) {
+        var badge = document.createElement('span');
+        badge.className = 'explore-badge explore-badge-tag';
+        if (t === 'Resources') badge.className = 'explore-badge explore-badge-resource';
+        badge.textContent = t;
+        meta.appendChild(badge);
+      });
+
+      if (post.difficulty) {
+        var diffBadge = document.createElement('span');
+        diffBadge.className = 'explore-badge ' + diffBadgeClass(post.difficulty);
+        diffBadge.textContent = post.difficulty;
+        meta.appendChild(diffBadge);
+      }
+
+      var date = document.createElement('span');
+      date.className = 'explore-post-date';
+      date.textContent = post.date + ' \u00b7 ' + post.readingTime + ' min';
+      meta.appendChild(date);
+
+      card.appendChild(title);
+      card.appendChild(summary);
+      card.appendChild(meta);
+      postListEl.appendChild(card);
+    });
+
+    resultsEl.textContent = filtered.length + ' post' + (filtered.length !== 1 ? 's' : '');
+    emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
+
+    var hasActive = activeFilters.platform.length > 0 || activeFilters.tag.length > 0 || activeFilters.diff.length > 0 || searchInput.value.trim() !== '';
+    clearBtn.style.display = hasActive ? 'inline-flex' : 'none';
+  }
+
+  function clearAll() {
+    activeFilters = { platform: [], tag: [], diff: [] };
+    searchInput.value = '';
+    document.querySelectorAll('.explore-chip.selected').forEach(function (c) {
+      c.classList.remove('selected');
+      c.setAttribute('aria-pressed', 'false');
+    });
+    diffGroupEl.classList.remove('explore-filter-faded');
+    diffNoteEl.classList.remove('visible');
+    renderPosts();
+  }
+
+  searchInput.addEventListener('input', renderPosts);
+  clearBtn.addEventListener('click', clearAll);
+  clearLink.addEventListener('click', clearAll);
+
+  renderPosts();
+})();
+</script>
+
+{{- end }}{{/* end main */}}

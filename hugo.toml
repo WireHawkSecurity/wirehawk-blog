@@ -1,0 +1,97 @@
+baseURL = "https://blog.wirehawksecurity.com/"
+languageCode = "en-us"
+title = "WireHawk Security | Blog"
+theme = "PaperMod"
+
+[pagination]
+  pagerSize = 10
+
+[outputs]
+  home = ["HTML", "RSS"]
+
+# Taxonomies disabled — filtering is handled by the Explore page
+[taxonomies]
+
+[params]
+  env = "production"
+  description = "Information security blog focused on penetration testing and offensive security. Detailed walkthroughs covering tools, techniques, tactics, and methodology."
+  author = "0xB1rd"
+  defaultTheme = "dark"
+  disableThemeToggle = true
+  ShowScrollTopButton = true
+  showReadingTime = true
+  showShareButtons = false
+  showPostNavLinks = true
+  showBreadCrumbs = true
+  showCodeCopyButtons = true
+  showtoc = true
+  tocopen = false
+  comments = false
+  hideFooter = false
+
+  [params.cover]
+    linkFullImages = true
+    responsiveImages = true
+
+  [params.assets]
+    theme_color = "#0d0d0d"
+    msapplication_TileColor = "#0d0d0d"
+
+  [params.homeInfoParams]
+    Title = "WireHawk Security | Blog"
+    Content = "Offensive security walkthroughs covering full attack chains from initial access to compromise. Written by 0xB1rd."
+
+  [[params.socialIcons]]
+    name = "x"
+    url = "https://x.com/WireHawkSec"
+  [[params.socialIcons]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/company/wirehawk-security/"
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/WireHawkSecurity"
+  [[params.socialIcons]]
+    name = "youtube"
+    url = "https://www.youtube.com/@WireHawkSecurity"
+  [[params.socialIcons]]
+    name = "discord"
+    url = "https://discord.gg/QrCxzegqrJ"
+  [[params.socialIcons]]
+    name = "rss"
+    url = "/index.xml"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+    weight = 20
+  [[menu.main]]
+    identifier = "explore"
+    name = "Explore"
+    url = "/explore/"
+    weight = 30
+  [[menu.main]]
+    identifier = "subscribe"
+    name = "Subscribe"
+    url = "/subscribe/"
+    weight = 45
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 50
+
+[markup]
+  [markup.highlight]
+    style = "dracula"
+    lineNos = false
+    guessSyntax = false
+    noClasses = true
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[services]
+  [services.googleAnalytics]
+    id = "G-DVKLPSWRQ5"

@@ -1,0 +1,476 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Global Overrides ── */
+:root {
+  --radius: 6px;
+}
+
+/* ── PaperMod Dark Theme Overrides ── */
+/* Must match PaperMod's :root[data-theme="dark"] specificity. */
+/* Our extended CSS loads after PaperMod, so cascade order wins. */
+:root[data-theme="dark"] {
+  --theme: #0d0d0d;
+  --entry: #151515;
+  --primary: #c0c0c0;
+  --secondary: #888888;
+  --tertiary: #222222;
+  --content: #c0c0c0;
+  --code-block-bg: #151515;
+  --code-bg: #151515;
+  --border: #222222;
+  color-scheme: dark;
+}
+
+/* ── Base Typography ── */
+html {
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.post-content {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.02em;
+  color: #e0e0e0;
+}
+
+/* ── Text Selection ── */
+::selection {
+  background: #3A7060;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: #3A7060;
+  color: #ffffff;
+}
+
+/* ── Listing Page Headers (Posts, Platforms, Tags) ── */
+.page-header {
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  margin-bottom: 0.25rem;
+}
+
+/* ── Post Title & Meta ── */
+.post-title {
+  letter-spacing: -0.02em;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  margin-top: 0.75rem;
+  color: #888888;
+}
+
+.breadcrumbs {
+  margin-bottom: 1.25rem;
+}
+
+/* ── Section Spacing ── */
+.post-content h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid #D44035;
+}
+
+/* ── Code Blocks ── */
+code,
+pre code,
+.highlight code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.88rem;
+}
+
+.post-content pre {
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  background: #151515;
+  border: 1px solid #222222;
+}
+
+.post-content code:not(pre code) {
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  background: #181818;
+  border: 1px solid #222222;
+  overflow-wrap: anywhere;
+}
+
+/* ── Code Copy Button ── */
+.copy-code {
+  background: transparent;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  color: #666;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.copy-code:hover {
+  color: #D44035;
+  border-color: #D44035;
+}
+
+/* ── Images ── */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1.5rem 0;
+  border: 1px solid #222222;
+}
+
+/* ── Links ── */
+.post-content a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #555;
+}
+
+.post-content a:hover {
+  color: #D44035;
+  text-decoration-color: #D44035;
+}
+
+a:hover {
+  color: #D44035;
+}
+
+.post-entry:hover,
+.post-entry:focus-within {
+  border-color: #D44035;
+}
+
+/* ── Reading Progress Bar ── */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #D44035;
+  z-index: 100;
+  transition: width 50ms linear;
+}
+
+/* ── Scroll to Top Button ── */
+.top-link {
+  background: #151515 !important;
+  border: 1px solid #333333 !important;
+  border-radius: 6px !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  color: #888888 !important;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.top-link:hover,
+.top-link:active {
+  border-color: #D44035 !important;
+  color: #D44035 !important;
+  box-shadow: 0 0 12px rgba(212, 64, 53, 0.15);
+}
+
+/* ── Homepage Hero ── */
+.first-entry {
+  min-height: auto;
+  margin-bottom: calc(var(--gap) * 1.5);
+}
+
+/* ── Post List Cards ── */
+.post-entry {
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.post-entry:last-of-type {
+  margin-bottom: 0;
+}
+
+.entry-header h2 {
+  font-size: 1.35rem;
+  line-height: 1.35;
+}
+
+.entry-content {
+  margin: 0.6rem 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #888888;
+}
+
+.entry-footer {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: #888888;
+}
+
+/* ── Post Navigation ── */
+.paginav {
+  border: none;
+  background: transparent;
+  gap: 10px;
+}
+
+.paginav a {
+  border: 1px solid #222222;
+  background: #151515;
+  transition: border-color 0.2s ease;
+}
+
+.paginav a:hover {
+  background: #151515;
+  border-color: #D44035;
+}
+
+.paginav a:focus-visible {
+  background: #151515;
+  border-color: #D44035;
+  outline: none;
+}
+
+.paginav span:hover:not(.title) {
+  text-decoration: none;
+}
+
+.paginav a:only-child {
+  width: 100%;
+  margin: 0;
+}
+
+.paginav a.next:only-child {
+  text-align: right;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .post-title {
+    font-size: 28px;
+  }
+
+  .page-header h1 {
+    font-size: 30px;
+  }
+
+  .breadcrumbs {
+    margin-bottom: 0.75rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.75rem;
+  }
+
+  .post-entry {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .entry-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .post-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .post-content pre {
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    border-radius: 6px;
+  }
+
+  .post-content h2 {
+    margin-top: 2rem;
+    font-size: 1.35rem;
+  }
+
+  .post-content img {
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+
+  .home-info .entry-header h1 {
+    font-size: 30px;
+  }
+
+  .first-entry {
+    margin-bottom: 1.75rem;
+  }
+
+  .paginav {
+    flex-direction: column;
+  }
+
+  .paginav a {
+    width: 100%;
+    margin: 0;
+  }
+
+}
+
+/* ── Small Phones ── */
+@media (max-width: 480px) {
+  .post-title {
+    font-size: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+  }
+
+  .home-info .entry-header h1 {
+    font-size: 29px;
+  }
+}
+
+/* ── Image Captions ── */
+.post-content p:has(> img) + p:has(> em:only-child) {
+  text-align: center;
+  font-size: 0.88rem;
+  color: #888888;
+  margin-top: -0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .post-content p:has(> img) + p:has(> em:only-child) {
+    margin-top: -0.25rem;
+    font-size: 0.82rem;
+  }
+}
+
+/* ── Image Lightbox ── */
+.post-content p > img {
+  cursor: zoom-in;
+}
+
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 200;
+  cursor: zoom-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox-overlay img {
+  width: auto;
+  height: auto;
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+  touch-action: pinch-zoom;
+}
+
+.lightbox-overlay.active img {
+  transform: scale(1);
+}
+
+/* ── Taxonomy Pages (Platforms, Tags) ── */
+.page-header .post-description {
+  color: #888888;
+  font-size: 0.95rem;
+  margin-top: 1rem;
+}
+
+.page-header:has(.post-description) {
+  margin-bottom: 1.75rem;
+}
+
+.terms-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  list-style: none;
+}
+
+.terms-tags li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.terms-tags a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.15rem;
+  background: #151515;
+  border: 1px solid #222222;
+  border-radius: 6px;
+  color: #c0c0c0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.terms-tags a:hover,
+.terms-tags a:active {
+  border-color: #D44035;
+  color: #e0e0e0;
+}
+
+.term-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  margin-left: 0.6rem;
+  background: #222222;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888888;
+  line-height: 1;
+}

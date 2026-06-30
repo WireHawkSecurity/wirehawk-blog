@@ -1,0 +1,231 @@
+/* ===================================================================
+   WireHawk Security — Subscribe Page
+   assets/css/extended/subscribe.css
+
+   Styles for the /subscribe/ page and the post-level subscribe CTA.
+   Design language follows the ToC card pattern: left accent border,
+   subtle background, no enclosing border. Tokens from font.css.
+   =================================================================== */
+
+/* ── Subscribe Page ── */
+
+.subscribe-intro {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #888888;
+  margin-top: -16px;
+  margin-bottom: 1.5rem;
+}
+
+.subscribe-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.subscribe-card {
+  background: #131313;
+  border-left: 3px solid #D44035;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+}
+
+.subscribe-card-title {
+  color: #e0e0e0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem 0;
+}
+
+.subscribe-card-desc {
+  color: #888888;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin: 0 0 1rem 0;
+}
+
+/* ── Row Layout ── */
+
+.subscribe-email-form,
+.subscribe-rss-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+/* ── Email Input ── */
+
+.subscribe-email-input {
+  flex: 1;
+  height: 2rem;
+  padding: 0.5rem 0.85rem;
+  background: #0d0d0d;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  color: #c0c0c0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.88rem;
+  line-height: 1;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.subscribe-email-input::placeholder {
+  color: #555555;
+}
+
+.subscribe-email-input:focus {
+  border-color: #D44035;
+}
+
+.subscribe-email-input:-webkit-autofill,
+.subscribe-email-input:-webkit-autofill:hover,
+.subscribe-email-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #0d0d0d inset;
+  -webkit-text-fill-color: #c0c0c0;
+  border: 1px solid #222222;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── URL Box ── */
+
+.subscribe-url {
+  height: 2rem;
+  padding: 0.5rem 0.85rem;
+  background: #0d0d0d;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.88rem;
+  line-height: 1;
+  color: #888888;
+  cursor: text;
+  -webkit-user-select: all;
+  flex: 1;
+  min-width: 0;
+  user-select: all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Buttons (Subscribe + Open Feed) ──
+   Both are <button> elements so they share identical browser defaults
+   from PaperMod's reset (padding: 0, font: inherit, border: 0). */
+
+.post-content .subscribe-form-btn {
+  height: 2rem;
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  color: #c0c0c0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.post-content .subscribe-form-btn:hover {
+  border-color: #D44035;
+  color: #D44035;
+}
+
+/* ── Email Subscribe Link ── */
+
+.subscribe-link-btn {
+  display: inline-block;
+  text-decoration: none !important;
+}
+
+/* ── Post Subscribe CTA ── */
+
+.subscribe-cta {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #222222;
+  color: #666666;
+  font-size: 0.9rem;
+}
+
+.post-content .subscribe-cta a {
+  color: #888888;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #444444;
+}
+
+.post-content .subscribe-cta a:hover {
+  color: #D44035;
+  text-decoration-color: #D44035;
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 768px) {
+  .subscribe-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .subscribe-card-title {
+    font-size: 0.95rem;
+  }
+
+  .subscribe-card-desc {
+    font-size: 0.88rem;
+  }
+
+  .subscribe-email-form,
+  .subscribe-rss-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subscribe-email-input {
+    max-width: none;
+    font-size: 16px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .subscribe-url {
+    font-size: 0.85rem;
+    height: auto;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.5;
+    word-break: break-all;
+  }
+
+  .post-content .subscribe-form-btn {
+    text-align: center;
+  }
+
+  .subscribe-cta {
+    font-size: 0.85rem;
+    margin-top: 2.5rem;
+  }
+}
+
+/* ── Small Phones ── */
+
+@media (max-width: 480px) {
+  .subscribe-card {
+    padding: 0.85rem 1rem;
+  }
+
+  .post-content .subscribe-form-btn {
+    font-size: 0.85rem;
+  }
+}
