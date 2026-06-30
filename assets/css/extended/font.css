@@ -244,6 +244,13 @@ a:hover {
   border: 1px solid #222222;
   background: #151515;
   transition: border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.paginav a span:not(.title) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .paginav a:hover {
@@ -262,11 +269,12 @@ a:hover {
 }
 
 .paginav a:only-child {
-  width: 100%;
+  width: 50%;
   margin: 0;
 }
 
 .paginav a.next:only-child {
+  margin-left: auto;
   text-align: right;
 }
 
