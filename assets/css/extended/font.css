@@ -343,6 +343,14 @@ a:hover {
     margin: 0;
   }
 
+  .paginav a:only-child {
+    width: 100%;
+  }
+
+  .paginav a.next:only-child {
+    margin-left: 0;
+  }
+
 }
 
 /* ── Small Phones ── */
