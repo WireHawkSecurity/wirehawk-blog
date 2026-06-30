@@ -61,7 +61,7 @@ h1, h2, h3 {
   color: #ffffff;
 }
 
-/* ── Listing Page Headers (Posts, Platforms, Tags) ── */
+/* ── Listing Page Headers ── */
 .page-header {
   margin-bottom: 2.5rem;
 }
@@ -429,7 +429,7 @@ a:hover {
   transform: scale(1);
 }
 
-/* ── Taxonomy Pages (Platforms, Tags) ── */
+/* ── Page Descriptions ── */
 .page-header .post-description {
   color: #888888;
   font-size: 0.95rem;
@@ -440,53 +440,3 @@ a:hover {
   margin-bottom: 1.75rem;
 }
 
-.terms-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0;
-  margin: 1.5rem 0 0;
-  list-style: none;
-}
-
-.terms-tags li {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.terms-tags a {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.6rem 1.15rem;
-  background: #151515;
-  border: 1px solid #222222;
-  border-radius: 6px;
-  color: #c0c0c0;
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.terms-tags a:hover,
-.terms-tags a:active {
-  border-color: #D44035;
-  color: #e0e0e0;
-}
-
-.term-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.4rem;
-  height: 1.4rem;
-  padding: 0 0.35rem;
-  margin-left: 0.6rem;
-  background: #222222;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #888888;
-  line-height: 1;
-}
