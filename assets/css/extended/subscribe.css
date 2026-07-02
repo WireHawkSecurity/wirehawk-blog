@@ -25,7 +25,7 @@
 
 .subscribe-card {
   background: #131313;
-  border-left: 3px solid #D44035;
+  border-left: 3px solid var(--wh-red);
   border-top: none;
   border-right: none;
   border-bottom: none;
@@ -80,7 +80,7 @@
 }
 
 .subscribe-email-input:focus {
-  border-color: #D44035;
+  border-color: var(--wh-red);
 }
 
 .subscribe-email-input:-webkit-autofill,
@@ -136,8 +136,8 @@
 }
 
 .post-content .subscribe-form-btn:hover {
-  border-color: #D44035;
-  color: #D44035;
+  border-color: var(--wh-red);
+  color: var(--wh-red);
 }
 
 /* ── Email Subscribe Link ── */
@@ -167,8 +167,8 @@
 }
 
 .post-content .subscribe-cta a:hover {
-  color: #D44035;
-  text-decoration-color: #D44035;
+  color: var(--wh-red);
+  text-decoration-color: var(--wh-red);
 }
 
 /* ── Mobile ── */

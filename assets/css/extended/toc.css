@@ -120,9 +120,9 @@ details.toc .inner a {
 }
 
 details.toc .inner a:hover {
-    color: #D44035;
-    border-left-color: #D44035;
-    background-color: rgba(212, 64, 53, 0.04);
+    color: var(--wh-red);
+    border-left-color: var(--wh-red);
+    background-color: rgba(var(--wh-red-rgb), 0.04);
     text-decoration: none;
     box-shadow: none;
 }
@@ -132,7 +132,7 @@ details.toc .inner a:hover {
 
 details.toc .inner a.active {
     color: #c0c0c0;
-    border-left-color: #D44035;
+    border-left-color: var(--wh-red);
     font-weight: 600;
 }
 

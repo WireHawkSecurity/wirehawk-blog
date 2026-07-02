@@ -3,6 +3,13 @@
 /* ── Global Overrides ── */
 :root {
   --radius: 6px;
+
+  /* WireHawk Security Reds
+     Brand red palette, matched to the main site (wirehawksecurity.com --red / --red-fill). */
+  --wh-red: #C0392B;          /* Primary brand red: borders, links, text accents, thin solid accents */
+  --wh-red-rgb: 192, 57, 43;  /* Primary red as an RGB triplet, single source for rgba() shadows and tints */
+  --wh-red-fill: #A33025;     /* Darker fill red for solid red buttons (matches main site --red-fill); reserved, not yet applied */
+  --wh-red-light: #E46B5E;    /* Lighter red for legible Hard-difficulty labels on dark tinted pills (derived from --wh-red) */
 }
 
 /* ── PaperMod Dark Theme Overrides ── */
@@ -91,7 +98,7 @@ h1, h2, h3 {
   margin-top: 2.5rem;
   margin-bottom: 1rem;
   padding-bottom: 0.4rem;
-  border-bottom: 2px solid #D44035;
+  border-bottom: 2px solid var(--wh-red);
 }
 
 /* ── Code Blocks ── */
@@ -132,8 +139,8 @@ pre code,
 }
 
 .copy-code:hover {
-  color: #D44035;
-  border-color: #D44035;
+  color: var(--wh-red);
+  border-color: var(--wh-red);
 }
 
 /* ── Images ── */
@@ -154,17 +161,17 @@ pre code,
 }
 
 .post-content a:hover {
-  color: #D44035;
-  text-decoration-color: #D44035;
+  color: var(--wh-red);
+  text-decoration-color: var(--wh-red);
 }
 
 a:hover {
-  color: #D44035;
+  color: var(--wh-red);
 }
 
 .post-entry:hover,
 .post-entry:focus-within {
-  border-color: #D44035;
+  border-color: var(--wh-red);
 }
 
 /* ── Reading Progress Bar ── */
@@ -174,7 +181,7 @@ a:hover {
   left: 0;
   width: 0%;
   height: 2px;
-  background: #D44035;
+  background: var(--wh-red);
   z-index: 100;
   transition: width 50ms linear;
 }
@@ -192,9 +199,9 @@ a:hover {
 
 .top-link:hover,
 .top-link:active {
-  border-color: #D44035 !important;
-  color: #D44035 !important;
-  box-shadow: 0 0 12px rgba(212, 64, 53, 0.15);
+  border-color: var(--wh-red) !important;
+  color: var(--wh-red) !important;
+  box-shadow: 0 0 12px rgba(var(--wh-red-rgb), 0.15);
 }
 
 /* ── Homepage Hero ── */
@@ -255,12 +262,12 @@ a:hover {
 
 .paginav a:hover {
   background: #151515;
-  border-color: #D44035;
+  border-color: var(--wh-red);
 }
 
 .paginav a:focus-visible {
   background: #151515;
-  border-color: #D44035;
+  border-color: var(--wh-red);
   outline: none;
 }
 
