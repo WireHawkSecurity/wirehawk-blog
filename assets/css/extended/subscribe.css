@@ -106,7 +106,7 @@
   color: #888888;
   cursor: text;
   -webkit-user-select: all;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   user-select: all;
   white-space: nowrap;
