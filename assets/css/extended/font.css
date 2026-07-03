@@ -5,10 +5,9 @@
   --radius: 6px;
 
   /* WireHawk Security Reds
-     Brand red palette, matched to the main site (wirehawksecurity.com --red / --red-fill). */
+     Brand red palette, matched to the main site (wirehawksecurity.com --red). */
   --wh-red: #C0392B;          /* Primary brand red: borders, links, text accents, thin solid accents */
   --wh-red-rgb: 192, 57, 43;  /* Primary red as an RGB triplet, single source for rgba() shadows and tints */
-  --wh-red-fill: #A33025;     /* Darker fill red for solid red buttons (matches main site --red-fill); reserved, not yet applied */
   --wh-red-light: #E46B5E;    /* Lighter red for legible Hard-difficulty labels on dark tinted pills (derived from --wh-red) */
 }
 
