@@ -63,6 +63,9 @@
 {{- if (not site.Params.disableScrollToTop) }}
 <script>
     var toplink = document.getElementById("top-link");
+    // iOS renders :active on anchors only when a touch listener is attached,
+    // so this empty handler lets the tap-flash styling show on mobile.
+    toplink.addEventListener("touchstart", function () {}, { passive: true });
     window.onscroll = function () {
         const scrollThreshold = window.innerHeight;
         if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
