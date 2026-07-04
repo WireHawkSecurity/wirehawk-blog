@@ -196,11 +196,16 @@ a:hover {
   transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.top-link:hover,
+@media (hover: hover) {
+  .top-link:hover {
+    border-color: var(--wh-red) !important;
+    color: var(--wh-red) !important;
+  }
+}
+
 .top-link:active {
   border-color: var(--wh-red) !important;
   color: var(--wh-red) !important;
-  box-shadow: 0 0 12px rgba(var(--wh-red-rgb), 0.15);
 }
 
 /* ── Homepage Hero ── */
