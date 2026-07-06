@@ -7,8 +7,8 @@ build:
   list: never
 ---
 
-Information security professional focused on penetration testing and offensive security. This blog covers the full spectrum of offensive security, from OSINT and enumeration to exploitation and post-exploitation, through detailed walkthroughs, technique breakdowns, and methodology.
+We cover offensive security and penetration testing, mostly through detailed step-by-step walkthroughs. We focus on the methodology, not just the commands, so the approach carries over to your own work.
 
-The goal is simple: share real knowledge with the community so you can learn the approach and apply it in your own work.
+Whether you're working through labs, studying for a cert, or sharpening skills on the job, the write-ups are meant to be practical: clear enough to follow, detailed enough to learn from.
 
 — 0xB1rd

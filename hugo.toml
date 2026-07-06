@@ -39,7 +39,7 @@ theme = "PaperMod"
 
   [params.homeInfoParams]
     Title = "WireHawk Security | Blog"
-    Content = "Offensive security walkthroughs covering full attack chains from initial access to compromise. Written by 0xB1rd."
+    Content = "Offensive security walkthroughs across the full attack chain, from OSINT and enumeration to exploitation and post-exploitation."
 
   [[params.socialIcons]]
     name = "x"
