@@ -171,6 +171,7 @@ a:hover {
 .post-entry:hover,
 .post-entry:focus-within {
   border-color: var(--wh-red);
+  transform: translateY(-3px);
 }
 
 /* ── Reading Progress Bar ── */
@@ -220,6 +221,21 @@ a:hover {
   margin-bottom: 1.5rem;
   padding: 1.5rem;
   transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Listing cover — edge-to-edge banner */
+.post-entry .entry-cover {
+  margin: -1.5rem -1.5rem 1.25rem;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+
+.post-entry .entry-cover img {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  object-position: center;
 }
 
 .post-entry:last-of-type {
