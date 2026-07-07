@@ -1,0 +1,27 @@
+{{- $u := urls.Parse .Destination -}}
+{{- $src := $u.String -}}
+{{- $dims := dict -}}
+{{- if not $u.IsAbs -}}
+  {{- $path := strings.TrimPrefix "./" $u.Path }}
+  {{- with or (.PageInner.Resources.Get $path) (resources.Get $path) -}}
+    {{- $src = .RelPermalink -}}
+    {{- with $u.RawQuery -}}{{- $src = printf "%s?%s" $src . -}}{{- end -}}
+    {{- with $u.Fragment -}}{{- $src = printf "%s#%s" $src . -}}{{- end -}}
+    {{- /* Reserve intrinsic dimensions so lazy-loaded images do not shift the
+           page. Without this, in-page anchor jumps (e.g. the ToC "Final Thoughts"
+           link) land short because images above the target load in and push it
+           down, and the scroll-spy measures a moving layout. Raster images only;
+           SVGs have no processable Width/Height. */ -}}
+    {{- if and (eq .ResourceType "image") (not (in .MediaType.SubType "svg")) -}}
+      {{- $dims = dict "width" (string .Width) "height" (string .Height) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $attributes := merge .Attributes (dict "alt" .Text "src" $src "title" (.Title | transform.HTMLEscape) "loading" "lazy") $dims -}}
+<img
+  {{- range $k, $v := $attributes -}}
+    {{- if $v -}}
+      {{- printf " %s=%q" $k $v | safeHTMLAttr -}}
+    {{- end -}}
+  {{- end -}}>
+{{- /**/ -}}
