@@ -328,6 +328,10 @@ a:hover {
     margin-bottom: 1.25rem;
   }
 
+  .post-entry .entry-cover {
+    margin: -1.25rem -1.25rem 1rem;
+  }
+
   .entry-header h2 {
     font-size: 1.15rem;
   }
