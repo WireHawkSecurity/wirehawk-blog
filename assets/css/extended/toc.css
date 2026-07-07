@@ -131,8 +131,9 @@ details.toc .inner a:hover {
 /* ── Active Section (set by scroll-spy) ── */
 
 details.toc .inner a.active {
-    color: #c0c0c0;
+    color: var(--wh-red);
     border-left-color: var(--wh-red);
+    background-color: rgba(var(--wh-red-rgb), 0.06);
     font-weight: 600;
 }
 

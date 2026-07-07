@@ -40,22 +40,41 @@
 
     if (!sections.length) return;
 
-    function update() {
-      var scrollPos = window.scrollY + 120;
-      var current = sections[0];
+    // Distance from the top of the viewport at which a heading counts as current.
+    var TRIGGER = 120;
 
+    function setActive(current) {
       for (var i = 0; i < sections.length; i++) {
-        if (sections[i].el.offsetTop <= scrollPos) {
+        sections[i].link.classList.toggle('active', sections[i] === current);
+      }
+    }
+
+    function update() {
+      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+
+      // Active section = the last heading whose top has passed the trigger line.
+      // getBoundingClientRect stays accurate regardless of layout shifts, image
+      // loads, or a future sticky header.
+      var current = sections[0];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].el.getBoundingClientRect().top <= TRIGGER) {
           current = sections[i];
         }
       }
 
-      links.forEach(function (l) { l.classList.remove('active'); });
-      if (current) current.link.classList.add('active');
+      // Bottom-of-page guard: the final heading often sits within the last
+      // viewport height, so it can never scroll up to the trigger line. Once the
+      // reader reaches the end of a scrollable page, force the last section
+      // active so the ToC still reflects where they are (e.g. Final Thoughts).
+      if (maxScroll > 0 && window.scrollY >= maxScroll - 2) {
+        current = sections[sections.length - 1];
+      }
+
+      setActive(current);
     }
 
     var ticking = false;
-    window.addEventListener('scroll', function () {
+    function onScroll() {
       if (!ticking) {
         requestAnimationFrame(function () {
           update();
@@ -63,7 +82,12 @@
         });
         ticking = true;
       }
-    }, { passive: true });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    // Recompute once images finish loading, since they shift heading positions.
+    window.addEventListener('load', update);
 
     update();
   })();
