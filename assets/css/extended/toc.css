@@ -21,7 +21,7 @@ details.toc {
     border-radius: 6px;
     padding: 0;
     margin-bottom: 2rem;
-    border-left: 3px solid #333333;
+    border-left: 3px solid var(--wh-red);
     border-top: none;
     border-right: none;
     border-bottom: none;
@@ -132,8 +132,6 @@ details.toc .inner a:hover {
 
 details.toc .inner a.active {
     color: var(--wh-red);
-    border-left-color: var(--wh-red);
-    background-color: rgba(var(--wh-red-rgb), 0.06);
     font-weight: 600;
 }
 
@@ -153,7 +151,7 @@ details.toc .inner a.active {
         padding: 0;
         background: #131313;
         border: 1px solid #222222;
-        border-left: 3px solid #333333;
+        border-left: 3px solid var(--wh-red);
         border-radius: 6px;
         z-index: 10;
         scrollbar-width: thin;
@@ -193,7 +191,7 @@ details.toc .inner a.active {
         max-height: none !important;
         overflow-y: visible !important;
         border: none !important;
-        border-left: 3px solid #333333 !important;
+        border-left: 3px solid var(--wh-red) !important;
         background: #131313;
         padding: 0;
     }
