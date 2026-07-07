@@ -218,12 +218,12 @@ a:hover {
 /* ── Post List Cards ── */
 .post-entry {
   border-radius: 6px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   padding: 1.5rem;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-/* Listing cover — edge-to-edge banner */
+/* Listing cover — full-width banner, height capped for compact cards */
 .post-entry .entry-cover {
   margin: -1.5rem -1.5rem 1.25rem;
   border-radius: 6px 6px 0 0;
@@ -233,7 +233,7 @@ a:hover {
 .post-entry .entry-cover img {
   display: block;
   width: 100%;
-  height: 200px;
+  height: 280px;
   object-fit: cover;
   object-position: center;
 }
@@ -325,11 +325,16 @@ a:hover {
 
   .post-entry {
     padding: 1.25rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .post-entry .entry-cover {
     margin: -1.25rem -1.25rem 1rem;
+  }
+
+  .post-entry .entry-cover img {
+    height: auto;
+    object-fit: fill;
   }
 
   .entry-header h2 {
