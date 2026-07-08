@@ -52,6 +52,13 @@
 {{- partial "home_info.html" . }}
 {{- end }}
 
+{{- if and .IsHome (eq $paginator.PageNumber 1) }}
+<div class="latest-header">
+  <h2>Latest Posts</h2>
+  <a class="viewall" href="{{ "posts/" | relURL }}">View all &rarr;</a>
+</div>
+{{- end }}
+
 {{- $term := .Data.Term }}
 {{- range $index, $page := $paginator.Pages }}
 

@@ -215,25 +215,42 @@ a:hover {
   margin-bottom: calc(var(--gap) * 1.5);
 }
 
-/* ── Post List Cards ── */
+/* ── Post List Cards (horizontal: side thumbnail + text, matches Posts library) ── */
 .post-entry {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-areas:
+    "thumb header"
+    "thumb content"
+    "thumb footer";
+  column-gap: 1.5rem;
+  align-items: start;
+  position: relative;
+  background: #151515;
+  border: 1px solid #222222;
   border-radius: 6px;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-/* Listing cover — full-width banner, height capped for compact cards */
+/* Listing thumbnail — fixed 16:9 frame, cover fill to match Posts library */
 .post-entry .entry-cover {
-  margin: -1.5rem -1.5rem 1.25rem;
-  border-radius: 6px 6px 0 0;
+  grid-area: thumb;
+  align-self: start;
+  width: 260px;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  background: #0d0d0d;
   overflow: hidden;
 }
 
 .post-entry .entry-cover img {
   display: block;
   width: 100%;
-  height: 280px;
+  height: 100%;
   object-fit: cover;
   object-position: center;
 }
@@ -242,22 +259,69 @@ a:hover {
   margin-bottom: 0;
 }
 
+.entry-header {
+  grid-area: header;
+  min-width: 0;
+}
+
 .entry-header h2 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   line-height: 1.35;
 }
 
 .entry-content {
-  margin: 0.6rem 0;
-  font-size: 0.92rem;
-  line-height: 1.6;
+  grid-area: content;
+  min-width: 0;
+  margin: 0.5rem 0 0;
+}
+
+.entry-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
   color: #888888;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .entry-footer {
-  margin-top: 0.5rem;
+  grid-area: footer;
+  min-width: 0;
+  margin-top: 0.6rem;
   font-size: 0.82rem;
   color: #888888;
+}
+
+/* ── Homepage "Latest Posts" section header ── */
+.latest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #333333;
+  padding-bottom: 0.6rem;
+  margin: 0 0 1.25rem;
+}
+
+.latest-header h2 {
+  font-size: 1.15rem;
+  color: #e0e0e0;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.latest-header .viewall {
+  color: #888888;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.latest-header .viewall:hover {
+  color: var(--wh-red);
 }
 
 /* ── Post Navigation ── */
@@ -324,16 +388,23 @@ a:hover {
   }
 
   .post-entry {
+    display: block;
     padding: 1.25rem;
     margin-bottom: 1.5rem;
   }
 
   .post-entry .entry-cover {
+    width: auto;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
     margin: -1.25rem -1.25rem 1rem;
   }
 
   .post-entry .entry-cover img {
     height: auto;
+    aspect-ratio: auto;
     object-fit: fill;
   }
 
