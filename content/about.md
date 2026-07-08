@@ -3,6 +3,7 @@ title: "About"
 layout: "single"
 showtoc: false
 hideMeta: true
+ogImage: "images/og/about.png"
 build:
   list: never
 ---

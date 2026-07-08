@@ -3,6 +3,7 @@ title: "Subscribe"
 layout: "single"
 showtoc: false
 hideMeta: true
+ogImage: "images/og/subscribe.png"
 build:
   list: never
 ---

@@ -1,0 +1,28 @@
+{{- /*
+  og-image.html - single source of truth for the OpenGraph / Twitter card image.
+  Returns the absolute URL of the correct social-share image for the current page.
+
+  Selection order (first match wins):
+    1. Explicit `ogImage` front-matter param  ->  that image
+         (used by the Posts library, Subscribe, and About pages, and available
+          as a manual override on any page)
+    2. Individual post carrying a cover image ->  the post's machine card,
+         resolved inside its own page bundle (/posts/<slug>/images/machine-card.png)
+    3. Anything else (home page, 404, any future page without an override)
+                                              ->  the homepage screenshot
+
+  The homepage screenshot doubles as the site-wide default, so the home page and
+  any unclassified page share images/og/home.png. Page-type screenshots live in
+  static/images/og/ at the canonical OpenGraph size of 1200x630.
+*/ -}}
+{{- $img := "" -}}
+{{- with .Params.ogImage -}}
+  {{- $img = . | absURL -}}
+{{- else -}}
+  {{- if and .IsPage .Params.cover.image -}}
+    {{- $img = (path.Join .RelPermalink .Params.cover.image) | absURL -}}
+  {{- else -}}
+    {{- $img = "images/og/home.png" | absURL -}}
+  {{- end -}}
+{{- end -}}
+{{- return $img -}}
