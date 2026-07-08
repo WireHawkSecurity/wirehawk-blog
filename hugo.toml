@@ -9,7 +9,7 @@ theme = "PaperMod"
 [outputs]
   home = ["HTML", "RSS"]
 
-# Taxonomies disabled — filtering is handled by the Explore page
+# Taxonomies disabled — filtering is handled by the Posts library
 [taxonomies]
 
 [params]
@@ -66,11 +66,6 @@ theme = "PaperMod"
     name = "Posts"
     url = "/posts/"
     weight = 20
-  [[menu.main]]
-    identifier = "explore"
-    name = "Explore"
-    url = "/explore/"
-    weight = 30
   [[menu.main]]
     identifier = "subscribe"
     name = "Subscribe"
