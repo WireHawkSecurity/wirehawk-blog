@@ -378,7 +378,7 @@ a:hover {
      unit that flows cleanly into the hero below. */
   .header-nav {
     line-height: 1.3;
-    row-gap: 1rem;
+    row-gap: 1.25rem;
     padding-top: 1rem;
     padding-bottom: 1rem;
   }
