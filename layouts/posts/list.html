@@ -19,9 +19,15 @@
 
   <div class="library-filters">
 
+    <div class="library-filter-group" id="typeGroup" role="group" aria-label="Filter by type">
+      <div class="library-filter-label" id="typeLabel">Type</div>
+      <div class="library-chips" id="typeChips"></div>
+    </div>
+
     <div class="library-filter-group" id="platformGroup" role="group" aria-label="Filter by platform">
       <div class="library-filter-label" id="platformLabel">Platform</div>
       <div class="library-chips" id="platformChips"></div>
+      <div class="library-filter-note" id="platformNote">Not applicable for resource posts.</div>
     </div>
 
     <div class="library-filter-group" id="tagGroup" role="group" aria-label="Filter by tag">
@@ -78,9 +84,21 @@
     {{- end }}
   ];
 
-  var activeFilters = { platform: [], tag: [], diff: [] };
+  var activeFilters = { platform: [], tag: [], diff: [], type: [] };
   var allChips = [];
 
+  // "Resources" is a content TYPE, not a topical tag. It still lives in each
+  // post's front-matter `tags`, but the library lifts it onto its own Type axis
+  // so it constrains the topic / platform / difficulty counts instead of sitting
+  // beside the topics. Topic chips are therefore the tags minus "Resources".
+  var RESOURCE_TAG = 'Resources';
+  posts.forEach(function (p) {
+    p.type = (p.tags || []).indexOf(RESOURCE_TAG) > -1 ? 'Resources' : 'Walkthroughs';
+  });
+
+  var typeGroupEl = document.getElementById('typeGroup');
+  var platformGroupEl = document.getElementById('platformGroup');
+  var platformNoteEl = document.getElementById('platformNote');
   var diffGroupEl = document.getElementById('diffGroup');
   var diffNoteEl = document.getElementById('diffNote');
   var postListEl = document.getElementById('postList');
@@ -102,6 +120,7 @@
   }
 
   var diffOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+  var typeOrder = { 'Walkthroughs': 1, 'Resources': 2 };
 
   function buildChips(containerId, filterKey, values, sortFn) {
     var container = document.getElementById(containerId);
@@ -133,10 +152,17 @@
     });
   }
 
+  var typeValues = {};
+  posts.forEach(function (p) { typeValues[p.type] = (typeValues[p.type] || 0) + 1; });
+
   var platformValues = collectValues('platforms');
   var tagValues = collectValues('tags');
+  delete tagValues[RESOURCE_TAG];
   var diffValues = collectValues('difficulty');
 
+  buildChips('typeChips', 'type', typeValues, function (a, b) {
+    return (typeOrder[a] || 99) - (typeOrder[b] || 99);
+  });
   buildChips('platformChips', 'platform', platformValues);
   buildChips('tagChips', 'tag', tagValues);
   buildChips('diffChips', 'diff', diffValues, function (a, b) {
@@ -144,6 +170,7 @@
   });
 
   function toggleChip(el) {
+    if (el.disabled) return;
     var filter = el.getAttribute('data-filter');
     var value = el.getAttribute('data-value');
     var idx = activeFilters[filter].indexOf(value);
@@ -156,33 +183,18 @@
       el.classList.add('selected');
       el.setAttribute('aria-pressed', 'true');
     }
-    updateDiffVisibility();
     refresh();
   }
 
-  function updateDiffVisibility() {
-    var tags = activeFilters.tag;
-    var onlyResources = tags.length > 0 && tags.every(function (t) { return t === 'Resources'; });
-
-    if (onlyResources) {
-      diffGroupEl.classList.add('library-filter-faded');
-      diffNoteEl.classList.add('visible');
-      activeFilters.diff = [];
-      document.querySelectorAll('[data-filter="diff"]').forEach(function (c) {
-        c.classList.remove('selected');
-        c.setAttribute('aria-pressed', 'false');
-      });
-    } else {
-      diffGroupEl.classList.remove('library-filter-faded');
-      diffNoteEl.classList.remove('visible');
-    }
-  }
-
-  // Core matcher. opts.skip lets a facet group ignore its OWN active
-  // selection when tallying counts, so sibling options in that group stay
-  // visible; every other group (and the search box) still constrains the tally.
+  // Core matcher. opts.skip lets a facet group ignore its OWN active selection
+  // when tallying counts, so sibling options in that group stay visible; every
+  // other group (and the search box) still constrains the tally.
   function matchesFilters(post, opts) {
     opts = opts || {};
+
+    if (opts.skip !== 'type' && activeFilters.type.length > 0) {
+      if (activeFilters.type.indexOf(post.type) === -1) return false;
+    }
 
     if (opts.skip !== 'platform' && activeFilters.platform.length > 0) {
       var postPlatforms = post.platforms || [];
@@ -232,9 +244,45 @@
     return posts.filter(function (p) {
       if (!matchesFilters(p, { skip: filterKey })) return false;
       if (filterKey === 'diff') return p.difficulty === value;
+      if (filterKey === 'type') return p.type === value;
       var field = filterKey === 'platform' ? p.platforms : p.tags;
       return (field || []).indexOf(value) > -1;
     }).length;
+  }
+
+  // A lab-only group (Platform, Difficulty) is inapplicable when nothing in the
+  // current result set carries that field, which happens once the results are
+  // all Resources. Then fade the whole group and clear its selection rather than
+  // show a row of bare greyed zeros. Topic chips still grey per-option instead.
+  function groupApplicable(filterKey) {
+    return posts.some(function (p) {
+      if (!matchesFilters(p, { skip: filterKey })) return false;
+      if (filterKey === 'platform') return (p.platforms || []).length > 0;
+      if (filterKey === 'diff') return !!p.difficulty;
+      return true;
+    });
+  }
+
+  function applyFade(filterKey, groupEl, noteEl) {
+    if (!groupApplicable(filterKey)) {
+      groupEl.classList.add('library-filter-faded');
+      if (noteEl) noteEl.classList.add('visible');
+      if (activeFilters[filterKey].length > 0) {
+        activeFilters[filterKey] = [];
+        groupEl.querySelectorAll('.library-chip.selected').forEach(function (c) {
+          c.classList.remove('selected');
+          c.setAttribute('aria-pressed', 'false');
+        });
+      }
+    } else {
+      groupEl.classList.remove('library-filter-faded');
+      if (noteEl) noteEl.classList.remove('visible');
+    }
+  }
+
+  function updateGroupVisibility() {
+    applyFade('platform', platformGroupEl, platformNoteEl);
+    applyFade('diff', diffGroupEl, diffNoteEl);
   }
 
   // Recompute every chip's count against the current selection and grey out
@@ -255,6 +303,7 @@
   }
 
   function refresh() {
+    updateGroupVisibility();
     updateCounts();
     renderPosts();
   }
@@ -334,17 +383,19 @@
     resultsEl.textContent = filtered.length + ' post' + (filtered.length !== 1 ? 's' : '');
     emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
 
-    var hasActive = activeFilters.platform.length > 0 || activeFilters.tag.length > 0 || activeFilters.diff.length > 0 || searchInput.value.trim() !== '';
+    var hasActive = activeFilters.platform.length > 0 || activeFilters.tag.length > 0 || activeFilters.diff.length > 0 || activeFilters.type.length > 0 || searchInput.value.trim() !== '';
     clearBtn.style.display = hasActive ? 'inline-flex' : 'none';
   }
 
   function clearAll() {
-    activeFilters = { platform: [], tag: [], diff: [] };
+    activeFilters = { platform: [], tag: [], diff: [], type: [] };
     searchInput.value = '';
     document.querySelectorAll('.library-chip.selected').forEach(function (c) {
       c.classList.remove('selected');
       c.setAttribute('aria-pressed', 'false');
     });
+    platformGroupEl.classList.remove('library-filter-faded');
+    platformNoteEl.classList.remove('visible');
     diffGroupEl.classList.remove('library-filter-faded');
     diffNoteEl.classList.remove('visible');
     refresh();

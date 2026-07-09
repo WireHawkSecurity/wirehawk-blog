@@ -2,7 +2,7 @@
 title: "BugForge 🔨 | Free Web App Pentesting Labs"
 date: 2026-06-28
 summary: "A completely free platform for practicing web application penetration testing with daily and weekly labs, built by Alex Wren."
-tags: ["Resources"]
+tags: ["Web Application", "Resources"]
 cover:
   image: "images/bugforge-cover.png"
   alt: "BugForge platform"
