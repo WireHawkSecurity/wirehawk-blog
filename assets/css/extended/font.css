@@ -371,6 +371,18 @@ a:hover {
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
+  /* Tighten the header band on mobile. PaperMod's 60px desktop header-height is
+     inherited as line-height once the logo and menu wrap into stacked rows,
+     leaving each short line floating in dead space. Collapse the line-height and
+     add a controlled row-gap and vertical padding so the band reads as one tight
+     unit that flows cleanly into the hero below. */
+  .header-nav {
+    line-height: 1.3;
+    row-gap: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
   .post-title {
     font-size: 28px;
   }
@@ -387,29 +399,39 @@ a:hover {
     margin-bottom: 1.75rem;
   }
 
+  /* Compact card matching the Posts library: 96px 16:9 thumbnail top-left,
+     title beside it, summary and footer spanning full width beneath. */
   .post-entry {
-    display: block;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-areas:
+      "thumb header"
+      "content content"
+      "footer footer";
+    column-gap: 0.9rem;
+    padding: 1rem 1.15rem;
+    margin-bottom: 0.75rem;
   }
 
   .post-entry .entry-cover {
-    width: auto;
-    aspect-ratio: auto;
-    border: 0;
-    border-radius: 6px 6px 0 0;
-    background: transparent;
-    margin: -1.25rem -1.25rem 1rem;
-  }
-
-  .post-entry .entry-cover img {
-    height: auto;
-    aspect-ratio: auto;
-    object-fit: fill;
+    width: 96px;
   }
 
   .entry-header h2 {
-    font-size: 1.15rem;
+    font-size: 1rem;
+  }
+
+  .entry-content {
+    margin-top: 0.35rem;
+  }
+
+  .entry-content p {
+    font-size: 0.82rem;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .entry-footer {
+    margin-top: 0.5rem;
   }
 
   .post-content {
