@@ -287,6 +287,16 @@ a:hover {
   overflow: hidden;
 }
 
+/* Homepage hero blurb: show the full tagline (no clamp), a step larger than card summaries. */
+.home-info .entry-content p {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
 .entry-footer {
   grid-area: footer;
   min-width: 0;
@@ -428,6 +438,10 @@ a:hover {
     font-size: 0.82rem;
     -webkit-line-clamp: 2;
     line-clamp: 2;
+  }
+
+  .home-info .entry-content p {
+    font-size: 0.95rem;
   }
 
   .entry-footer {

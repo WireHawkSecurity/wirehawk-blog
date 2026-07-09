@@ -79,6 +79,7 @@
   ];
 
   var activeFilters = { platform: [], tag: [], diff: [] };
+  var allChips = [];
 
   var diffGroupEl = document.getElementById('diffGroup');
   var diffNoteEl = document.getElementById('diffNote');
@@ -127,6 +128,8 @@
 
       chip.addEventListener('click', function () { toggleChip(chip); });
       container.appendChild(chip);
+
+      allChips.push({ el: chip, countEl: count, filter: filterKey, value: val });
     });
   }
 
@@ -154,7 +157,7 @@
       el.setAttribute('aria-pressed', 'true');
     }
     updateDiffVisibility();
-    renderPosts();
+    refresh();
   }
 
   function updateDiffVisibility() {
@@ -175,8 +178,13 @@
     }
   }
 
-  function matchesFilter(post) {
-    if (activeFilters.platform.length > 0) {
+  // Core matcher. opts.skip lets a facet group ignore its OWN active
+  // selection when tallying counts, so sibling options in that group stay
+  // visible; every other group (and the search box) still constrains the tally.
+  function matchesFilters(post, opts) {
+    opts = opts || {};
+
+    if (opts.skip !== 'platform' && activeFilters.platform.length > 0) {
       var postPlatforms = post.platforms || [];
       var platformMatch = activeFilters.platform.some(function (f) {
         return postPlatforms.indexOf(f) > -1;
@@ -184,7 +192,7 @@
       if (!platformMatch) return false;
     }
 
-    if (activeFilters.tag.length > 0) {
+    if (opts.skip !== 'tag' && activeFilters.tag.length > 0) {
       var postTags = post.tags || [];
       var tagMatch = activeFilters.tag.some(function (f) {
         return postTags.indexOf(f) > -1;
@@ -192,7 +200,7 @@
       if (!tagMatch) return false;
     }
 
-    if (activeFilters.diff.length > 0) {
+    if (opts.skip !== 'diff' && activeFilters.diff.length > 0) {
       if (!post.difficulty || activeFilters.diff.indexOf(post.difficulty) === -1) return false;
     }
 
@@ -212,6 +220,43 @@
     }
 
     return true;
+  }
+
+  function matchesFilter(post) {
+    return matchesFilters(post);
+  }
+
+  // Count posts carrying a given value in a facet group, evaluated with that
+  // group's own selection ignored (see matchesFilters skip).
+  function countFor(filterKey, value) {
+    return posts.filter(function (p) {
+      if (!matchesFilters(p, { skip: filterKey })) return false;
+      if (filterKey === 'diff') return p.difficulty === value;
+      var field = filterKey === 'platform' ? p.platforms : p.tags;
+      return (field || []).indexOf(value) > -1;
+    }).length;
+  }
+
+  // Recompute every chip's count against the current selection and grey out
+  // options that would return nothing (unless the chip is itself active).
+  function updateCounts() {
+    allChips.forEach(function (c) {
+      var n = countFor(c.filter, c.value);
+      c.countEl.textContent = n;
+      var isSelected = c.el.classList.contains('selected');
+      if (n === 0 && !isSelected) {
+        c.el.classList.add('library-chip-empty');
+        c.el.disabled = true;
+      } else {
+        c.el.classList.remove('library-chip-empty');
+        c.el.disabled = false;
+      }
+    });
+  }
+
+  function refresh() {
+    updateCounts();
+    renderPosts();
   }
 
   function diffBadgeClass(diff) {
@@ -302,14 +347,14 @@
     });
     diffGroupEl.classList.remove('library-filter-faded');
     diffNoteEl.classList.remove('visible');
-    renderPosts();
+    refresh();
   }
 
-  searchInput.addEventListener('input', renderPosts);
+  searchInput.addEventListener('input', refresh);
   clearBtn.addEventListener('click', clearAll);
   clearLink.addEventListener('click', clearAll);
 
-  renderPosts();
+  refresh();
 })();
 </script>
 

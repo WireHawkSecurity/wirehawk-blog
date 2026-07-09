@@ -209,6 +209,20 @@
   color: var(--wh-red-light);
 }
 
+/* Dead-end filter option: zero posts under the current selection.
+   Greyed and non-interactive so the reader can't land on an empty result.
+   A currently-selected chip is never greyed, even at count 0. */
+.library-chip-empty {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.library-chip-empty .library-chip-count {
+  background: #1a1a1a;
+  color: #555555;
+}
+
 /* Divider */
 .library-divider {
   border: none;
