@@ -52,6 +52,8 @@
 
   <div id="postList"></div>
 
+  <nav class="library-pagination" id="pagination" role="navigation" aria-label="Pagination"></nav>
+
   <div class="library-empty" id="emptyState">
     <p>No posts match the current filters. <button type="button" class="library-clear-link" id="clearLink">Clear all filters</button></p>
   </div>
@@ -86,6 +88,8 @@
 
   var activeFilters = { platform: [], tag: [], diff: [], type: [] };
   var allChips = [];
+  var PAGE_SIZE = 5;
+  var currentPage = 1;
 
   // "Resources" is a content TYPE, not a topical tag. It still lives in each
   // post's front-matter `tags`, but the library lifts it onto its own Type axis
@@ -102,6 +106,7 @@
   var diffGroupEl = document.getElementById('diffGroup');
   var diffNoteEl = document.getElementById('diffNote');
   var postListEl = document.getElementById('postList');
+  var paginationEl = document.getElementById('pagination');
   var resultsEl = document.getElementById('resultsCount');
   var emptyEl = document.getElementById('emptyState');
   var clearBtn = document.getElementById('clearBtn');
@@ -303,6 +308,7 @@
   }
 
   function refresh() {
+    currentPage = 1;
     updateGroupVisibility();
     updateCounts();
     renderPosts();
@@ -317,9 +323,17 @@
 
   function renderPosts() {
     var filtered = posts.filter(matchesFilter);
+
+    var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var pageSlice = filtered.slice(start, start + PAGE_SIZE);
+
     postListEl.innerHTML = '';
 
-    filtered.forEach(function (post) {
+    pageSlice.forEach(function (post) {
       var card = document.createElement('a');
       card.href = post.permalink;
       card.className = 'library-post-card';
@@ -383,8 +397,93 @@
     resultsEl.textContent = filtered.length + ' post' + (filtered.length !== 1 ? 's' : '');
     emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
 
+    renderPagination(filtered.length, totalPages);
+
     var hasActive = activeFilters.platform.length > 0 || activeFilters.tag.length > 0 || activeFilters.diff.length > 0 || activeFilters.type.length > 0 || searchInput.value.trim() !== '';
     clearBtn.style.display = hasActive ? 'inline-flex' : 'none';
+  }
+
+  // Windowed page tokens: always first + last, a one-page window around the
+  // current page, and '...' where a gap spans more than one page (a single-page
+  // gap is filled with the number itself rather than an ellipsis).
+  function pageList(current, total) {
+    var delta = 1;
+    var range = [];
+    for (var i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      }
+    }
+    var out = [];
+    var prev = 0;
+    range.forEach(function (n) {
+      if (prev) {
+        if (n - prev === 2) out.push(prev + 1);
+        else if (n - prev !== 1) out.push('...');
+      }
+      out.push(n);
+      prev = n;
+    });
+    return out;
+  }
+
+  // Client-side pager. Hidden entirely at one page or no results, so the current
+  // four-post library shows no controls until a sixth post pushes past page one.
+  function renderPagination(totalResults, totalPages) {
+    paginationEl.innerHTML = '';
+    if (totalResults === 0 || totalPages <= 1) {
+      paginationEl.style.display = 'none';
+      return;
+    }
+    paginationEl.style.display = 'flex';
+
+    function navBtn(label, targetPage, disabled) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'library-page-btn library-page-nav';
+      b.textContent = label;
+      if (disabled) {
+        b.disabled = true;
+        b.classList.add('library-page-disabled');
+      } else {
+        b.addEventListener('click', function () { goToPage(targetPage); });
+      }
+      return b;
+    }
+
+    paginationEl.appendChild(navBtn('\u2039 Prev', currentPage - 1, currentPage === 1));
+
+    pageList(currentPage, totalPages).forEach(function (tok) {
+      if (tok === '...') {
+        var gap = document.createElement('span');
+        gap.className = 'library-page-gap';
+        gap.textContent = '\u2026';
+        paginationEl.appendChild(gap);
+        return;
+      }
+      var isCurrent = tok === currentPage;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'library-page-btn library-page-num' + (isCurrent ? ' library-page-active' : '');
+      b.textContent = tok;
+      if (isCurrent) {
+        b.setAttribute('aria-current', 'page');
+      } else {
+        b.addEventListener('click', function () { goToPage(tok); });
+      }
+      paginationEl.appendChild(b);
+    });
+
+    paginationEl.appendChild(navBtn('Next \u203a', currentPage + 1, currentPage === totalPages));
+  }
+
+  function goToPage(n) {
+    currentPage = n;
+    renderPosts();
+    var header = document.querySelector('.library-results-header');
+    if (header && header.scrollIntoView) {
+      header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function clearAll() {

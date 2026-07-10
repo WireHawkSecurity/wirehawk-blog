@@ -443,6 +443,83 @@
   }
 }
 
+/* ── Pagination ── */
+/* Client-side pager for the filtered result set. Borders use the #333333 UI
+   chrome tier (like the nav and Clear button), the current page uses the red
+   accent, and disabled Prev/Next match the greyed dead-end chips. */
+.library-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.75rem;
+}
+
+.library-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #151515;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  color: #c0c0c0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.library-page-nav {
+  padding: 0.4rem 0.8rem;
+  color: #888888;
+}
+
+@media (hover: hover) {
+  .library-page-btn:hover {
+    border-color: var(--wh-red);
+    color: #e0e0e0;
+  }
+}
+
+.library-page-btn:focus-visible {
+  border-color: var(--wh-red);
+  box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.25);
+  outline: none;
+}
+
+.library-page-active,
+.library-page-active:hover {
+  border-color: var(--wh-red);
+  background: rgba(var(--wh-red-rgb), 0.12);
+  color: var(--wh-red-light);
+  font-weight: 600;
+  cursor: default;
+}
+
+.library-page-disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.library-page-gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  color: #555555;
+  font-size: 0.85rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .library-search {
