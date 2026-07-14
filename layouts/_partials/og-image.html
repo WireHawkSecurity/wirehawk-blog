@@ -1,0 +1,20 @@
+{{- /*
+  og-image.html - single source of truth for the OpenGraph / Twitter card image.
+  Selection order (first match wins):
+    1. An explicit `ogImage` front-matter param -> that page's screenshot
+       (Posts library, Subscribe, About).
+    2. An individual post -> its own cover image (the machine card), resolved
+       inside the post bundle (/posts/<slug>/images/machine-card.png).
+    3. Anything else (home page, 404, any future page) -> the homepage screenshot.
+*/ -}}
+{{- $img := "" -}}
+{{- with .Params.ogImage -}}
+  {{- $img = . | absURL -}}
+{{- else -}}
+  {{- if and .IsPage .Params.cover.image -}}
+    {{- $img = (path.Join .RelPermalink .Params.cover.image) | absURL -}}
+  {{- else -}}
+    {{- $img = "images/og/home.png" | absURL -}}
+  {{- end -}}
+{{- end -}}
+{{- return $img -}}
