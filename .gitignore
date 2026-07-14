@@ -1,3 +1,5 @@
 public/
 resources/
 .hugo_build.lock
+*.7z
+*.zip
