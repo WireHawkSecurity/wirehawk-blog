@@ -4,8 +4,7 @@
   <meta property="og:site_name" content="{{ . }}">
 {{- end }}
 
-{{- /* WireHawk: preview title routed through the shared og-title partial. */ -}}
-{{- with partial "og-title.html" . | plainify }}
+{{- with or .Title site.Title site.Params.title | plainify }}
   <meta property="og:title" content="{{ . }}">
 {{- end }}
 

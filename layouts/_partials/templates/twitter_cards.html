@@ -4,8 +4,7 @@
 <meta name="twitter:image" content="{{ . }}">
 {{- end }}
 
-{{- /* WireHawk: preview title routed through the shared og-title partial. */ -}}
-{{- with partial "og-title.html" . | plainify }}
+{{- with or .Title site.Title site.Params.title | plainify }}
   <meta name="twitter:title" content="{{ . }}">
 {{- end }}
 
