@@ -58,12 +58,12 @@ h1, h2, h3 {
 
 /* ── Text Selection ── */
 ::selection {
-  background: #3A7060;
+  background: #7C2C22;
   color: #ffffff;
 }
 
 ::-moz-selection {
-  background: #3A7060;
+  background: #7C2C22;
   color: #ffffff;
 }
 
