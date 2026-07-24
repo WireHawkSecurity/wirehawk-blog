@@ -61,9 +61,7 @@
 /* ── Email Input ── */
 
 .subscribe-email-input {
-  flex: 0 1 auto;
-  width: 24.5rem;
-  max-width: 100%;
+  flex: 0 0 auto;
   height: 2rem;
   padding: 0.5rem 0.85rem;
   background: #0d0d0d;
@@ -108,7 +106,7 @@
   color: #888888;
   cursor: text;
   -webkit-user-select: all;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   user-select: all;
   white-space: nowrap;
@@ -149,11 +147,18 @@
   text-decoration: none !important;
 }
 
-/* ── Even Row Widths ──
-   The email input is given an explicit width matching the rendered
-   width of the RSS URL box (43 monospace characters at 0.88rem plus
-   horizontal padding), so neither row stretches to fill the card and
-   both buttons align vertically. */
+/* ── Matched Row Widths ──
+   The email input and the RSS URL box are sized by a single shared
+   declaration, so they render at identical widths no matter what the
+   loaded font metrics or box-sizing resolve to. Both buttons share a
+   min-width so they align vertically as well. Overridden back to auto
+   at the mobile breakpoint, where the rows stack. */
+
+.post-content .subscribe-email-input,
+.post-content .subscribe-url {
+  width: 24.6rem;
+  max-width: 100%;
+}
 
 .post-content .subscribe-email-form .subscribe-form-btn,
 .post-content .subscribe-rss-row .subscribe-form-btn {
@@ -249,7 +254,6 @@
   }
 
   .subscribe-email-input {
-    width: auto;
     max-width: none;
     font-size: 16px;
     padding-top: 0.25rem;
@@ -284,5 +288,18 @@
 
   .post-content .subscribe-form-btn {
     font-size: 0.85rem;
+  }
+}
+
+
+/* ── Mobile Width Reset ──
+   Matches the specificity of the shared sizing rule above so the fixed
+   width is cleared once the rows stack. */
+
+@media (max-width: 768px) {
+  .post-content .subscribe-email-input,
+  .post-content .subscribe-url {
+    width: auto;
+    max-width: none;
   }
 }
