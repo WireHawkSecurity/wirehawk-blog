@@ -1,0 +1,14 @@
+{{- $u := urls.Parse .Destination -}}
+{{- $external := false -}}
+{{- /* External means: absolute, http(s), and pointing at a host other than this
+       site. Anchors (#section), relative paths, and mailto:/tel: stay in-tab. */ -}}
+{{- if and $u.IsAbs (in (slice "http" "https") $u.Scheme) -}}
+  {{- if ne $u.Host (urls.Parse site.BaseURL).Host -}}
+    {{- $external = true -}}
+  {{- end -}}
+{{- end -}}
+<a href="{{ .Destination | safeURL }}"
+  {{- with .Title }} title="{{ . | transform.HTMLEscape }}"{{ end }}
+  {{- if $external }} target="_blank" rel="noopener noreferrer"{{ end -}}
+>{{ .Text }}</a>
+{{- /**/ -}}
