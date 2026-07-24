@@ -61,7 +61,9 @@
 /* ── Email Input ── */
 
 .subscribe-email-input {
-  flex: 1;
+  flex: 0 1 auto;
+  width: 24.5rem;
+  max-width: 100%;
   height: 2rem;
   padding: 0.5rem 0.85rem;
   background: #0d0d0d;
@@ -106,7 +108,7 @@
   color: #888888;
   cursor: text;
   -webkit-user-select: all;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   user-select: all;
   white-space: nowrap;
@@ -148,9 +150,10 @@
 }
 
 /* ── Even Row Widths ──
-   Both boxes use flex: 1 and both buttons share a min-width, so the
-   email input and the RSS URL box render at identical widths and the
-   two buttons align vertically. */
+   The email input is given an explicit width matching the rendered
+   width of the RSS URL box (43 monospace characters at 0.88rem plus
+   horizontal padding), so neither row stretches to fill the card and
+   both buttons align vertically. */
 
 .post-content .subscribe-email-form .subscribe-form-btn,
 .post-content .subscribe-rss-row .subscribe-form-btn {
@@ -246,6 +249,7 @@
   }
 
   .subscribe-email-input {
+    width: auto;
     max-width: none;
     font-size: 16px;
     padding-top: 0.25rem;
