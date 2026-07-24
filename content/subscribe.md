@@ -19,9 +19,7 @@ build:
 <p class="subscribe-card-desc">Get an email when a new post is published.</p>
 <form id="bd-subscribe-form" action="https://buttondown.com/api/emails/embed-subscribe/WireHawkSecurity" method="post">
 <input type="hidden" name="embed" value="1">
-<div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
-<label>Leave this field empty<input type="text" name="hp_website" tabindex="-1" autocomplete="off"></label>
-</div>
+<div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"><label>Leave this field empty<input type="text" name="hp_website" tabindex="-1" autocomplete="off"></label></div>
 <div class="subscribe-email-form">
 <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" class="subscribe-email-input" aria-label="Email address">
 <button type="submit" class="subscribe-form-btn">Subscribe</button>
@@ -53,18 +51,18 @@ build:
   var btn = form.querySelector('button[type="submit"]');
   var row = form.querySelector('.subscribe-email-form');
 
-  function fail(msg) {
-    status.textContent = msg;
-    status.className = 'subscribe-status subscribe-status-error';
-    btn.disabled = false;
-    btn.textContent = 'Subscribe';
-  }
-
   function done() {
     row.remove();
     status.textContent = 'Almost there. Check your inbox for a confirmation link to finish subscribing.';
     status.className = 'subscribe-status subscribe-status-ok';
     card.classList.add('subscribe-card-confirmed');
+  }
+
+  function fail(msg) {
+    status.textContent = msg;
+    status.className = 'subscribe-status subscribe-status-error';
+    btn.disabled = false;
+    btn.textContent = 'Subscribe';
   }
 
   form.addEventListener('submit', function (e) {
