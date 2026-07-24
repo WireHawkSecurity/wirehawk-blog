@@ -90,7 +90,7 @@ Let's check what requests are being made behind the scenes in Burp Suite.
 
 ## API Enumeration
 
-In Burp, we notice a GET request to `/api/users/all` triggered by the messages page. The response returns far more information than a messages feature should need.
+Clicking through the application fills up Burp's proxy history, and in there we notice a GET request to `/api/users/all` triggered by the messages page. The response returns far more information than a messages feature should need.
 
 ```
 HTTP/1.1 200 OK
@@ -107,7 +107,7 @@ Connection: close
 
 *Burp Suite: /api/users/all returning plaintext credentials for all users including admin*
 
-The API dumps the entire user table in plaintext: usernames, emails, passwords, MFA codes, and roles. We immediately spot the admin account with the password `YouWontGetThisPasswordYouNoobLOL123`. The `mfa` field is `null` for all users right now. Let's try logging in as admin.
+The API dumps the entire user table in plaintext: usernames, emails, passwords, roles, and an `mfa` field. We immediately spot the admin account with the password `YouWontGetThisPasswordYouNoobLOL123`. The `mfa` field is `null` for all users right now. Let's try logging in as admin.
 
 ## Access as admin
 
@@ -165,7 +165,7 @@ We upload the image and click `Preview Current Logo`. The metadata field display
 
 *SSTI confirmed: Jinja2 expression {{7*7}} rendered as 49*
 
-SSTI is confirmed. We escalate to remote code execution using a Jinja2 payload that calls `os.popen()` to execute system commands.
+SSTI is confirmed. Now we escalate to remote code execution. Jinja2 does not hand us `os` directly, so the payload walks out to it: `self.__init__` gets us a Python method, `__globals__` exposes the variables that method was defined alongside, and `__builtins__` inside those is Python's built-in namespace. From there `__import__` pulls in `os`, `popen()` runs our command, and `read()` returns the output into the page.
 
 ```
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}" image.png

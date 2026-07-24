@@ -1,5 +1,182 @@
+# ─────────────────────────────────────────────────────────────
+# Hugo build output
+# ─────────────────────────────────────────────────────────────
 public/
 resources/
 .hugo_build.lock
+hugo_stats.json
+
+# ─────────────────────────────────────────────────────────────
+# Archives (deliverable drops, CSS/site zips, screenshot bundles)
+# ─────────────────────────────────────────────────────────────
 *.7z
 *.zip
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+
+# ─────────────────────────────────────────────────────────────
+# Secrets and credentials — never in a public repo
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+.env*
+*.env
+.envrc
+.direnv/
+env.json
+environment.json
+secrets.*
+credentials.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.der
+*.ovpn
+*.kdbx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.ppk
+.netrc
+.htpasswd
+*.token
+*_token
+*.pwd
+
+# ─────────────────────────────────────────────────────────────
+# Offensive tooling output — raw engagement/lab artifacts.
+# Post content is written by hand; collector output never
+# belongs in the repo even from a training lab.
+# Directory rules are root-anchored so they cannot match a post slug.
+# ─────────────────────────────────────────────────────────────
+/loot/
+/evidence/
+/engagements/
+*_BloodHound.zip
+*_computers.json
+*_users.json
+*_groups.json
+*_domains.json
+*_gpos.json
+*_containers.json
+*_ous.json
+*.ccache
+*.kirbi
+*.ntds
+*.dit
+SECURITY
+SYSTEM.hive
+*.hive
+nxc.db
+smb.db
+*.sqlite
+*.sqlite3
+hashes.txt
+hash.txt
+*.hashes
+*.potfile
+hashcat.potfile
+*.pcap
+*.pcapng
+*.nessus
+*.gnmap
+*.nmap
+
+# ─────────────────────────────────────────────────────────────
+# Governing documents — local project files, not repo content
+# ─────────────────────────────────────────────────────────────
+WireHawk-Content-Style-Guide.md
+WireHawk-Blog-Infrastructure-Guide.md
+
+# ─────────────────────────────────────────────────────────────
+# Post production artifacts — deleted before publishing.
+# Ignored so a stray `git add -A` can never sweep them in.
+# ─────────────────────────────────────────────────────────────
+screenshots.md
+*-screenshots.md
+social/
+linkedin.md
+twitter.md
+
+# ─────────────────────────────────────────────────────────────
+# Raw lab notes and drafts — contain live creds, hashes, IPs.
+# Leading slash = repo root only, so a post slug like
+# content/posts/notes/ is never swallowed.
+# ─────────────────────────────────────────────────────────────
+/notes/
+/Notes/
+/raw-notes/
+/drafts/
+/_drafts/
+*.notes.md
+*-notes.md
+/scratch/
+/tmp/
+/temp/
+
+# ─────────────────────────────────────────────────────────────
+# Backup / working copies (e.g. font.css.bak, index.md.orig)
+# ─────────────────────────────────────────────────────────────
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.save
+*~
+*.swp
+*.swo
+*.log
+*.tmp
+copy of *
+* - Copy.*
+* - Copy (*).*
+
+# Transfer artifact: dotfiles arrive renamed from downloads/uploads.
+# Ignored so a stray copy can never be committed alongside the real file.
+_gitignore
+_gitattributes
+
+# ─────────────────────────────────────────────────────────────
+# OS cruft (Thumbs.db embeds image thumbnails — a real infoleak)
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+
+# ─────────────────────────────────────────────────────────────
+# Editors and IDEs
+# ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# ─────────────────────────────────────────────────────────────
+# Tooling
+# ─────────────────────────────────────────────────────────────
+node_modules/
+.npm/
+__pycache__/
+*.py[cod]
+.venv/
+venv/

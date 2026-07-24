@@ -1,7 +1,7 @@
 ---
 title: "Welcome 👋 | Hack Smarter Labs"
 date: 2026-07-05
-summary: "An easy AD lab chaining SMB share enumeration, PDF cracking, password spraying, Force Password Change ACL abuse, and ESC1 certificate exploitation for full domain compromise."
+summary: "An easy AD lab chaining SMB share enumeration, PDF cracking, password spraying, GenericAll and ForceChangePassword ACL abuse, and ESC1 certificate exploitation for full domain compromise."
 platforms: ["Hack Smarter Labs"]
 tags: ["Active Directory"]
 difficulty: "Easy"
@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising Welcome, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with phishing-obtained credentials for `e.hills`, which we use to enumerate an SMB share containing password-protected HR documents on the domain controller. Cracking the PDF with john reveals a default account password, and a password spray lands a hit on `a.harris`. BloodHound reveals `a.harris` holds `GenericAll` over `i.park`, and a Force Password Change chains through `i.park`'s `ForceChangePassword` privilege over the `svc_ca` service account. With `svc_ca` in the `Certificate Service DCOM` group, Certipy identifies an ESC1 misconfiguration on a custom certificate template that allows the requester to supply an arbitrary subject. We request a certificate as Administrator, authenticate via PKINIT to recover the NT hash, and log in to the domain controller for full domain compromise.
+In this walkthrough, we will be compromising Welcome, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with phishing-obtained credentials for `e.hills`, which we use to enumerate an SMB share containing password-protected HR documents on the domain controller. Cracking the PDF with john reveals a default account password, and a password spray lands a hit on `a.harris`. BloodHound reveals `a.harris` inherits `GenericAll` over `i.park` through the `HR` group, and a Force Password Change chains through `i.park`'s `ForceChangePassword` privilege over the `svc_ca` service account. `svc_ca` holds enrollment rights on a custom certificate template, and Certipy identifies an ESC1 misconfiguration on it that allows the requester to supply an arbitrary subject. We request a certificate as Administrator, authenticate via PKINIT to recover the NT hash, and log in to the domain controller for full domain compromise.
 
 ![Welcome machine card](images/machine-card.png)
 
@@ -157,7 +157,7 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 
 *NetExec share enumeration as e.hills with Human Resources share visible*
 
-We have READ access to a `Human Resources` share, which is non-standard and worth investigating. SMB signing is enabled and null authentication is permitted. Let's connect to the share and see what it contains.
+We have READ access to a `Human Resources` share, which is non-standard and worth investigating. Let's connect to the share and see what it contains.
 
 ## Smbclient
 
@@ -274,7 +274,7 @@ One hit: `a.harris` is still using the default password. We now have two valid a
 
 ## BloodHound Enumeration
 
-With two sets of credentials, we collect BloodHound data using NetExec to map out the domain's ACL relationships and group memberships.
+With two sets of credentials, we collect BloodHound data using NetExec to map out the domain's ACL relationships and group memberships. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@' --bloodhound --collection All --dns-server 10.1.92.228
@@ -394,11 +394,11 @@ We mark `i.park` as owned and check outbound relationships. `i.park` has `ForceC
 
 *BloodHound showing i.park has ForceChangePassword over svc_ca and svc_web*
 
-Looking at both targets, `svc_ca` is the priority. This account is a member of the `Certificate Service DCOM` group, which strongly suggests involvement with AD CS.
+Looking at both targets, `svc_ca` is the priority. The name and its membership in `Certificate Service DCOM Access` both point at AD CS. That group only grants DCOM access to the certificate authority and a default install puts Authenticated Users in it, so it is a signpost rather than a privilege.
 
-![Certificate Service DCOM group](images/bloodhound-cert-dcom.png)
+![Certificate Service DCOM Access group](images/bloodhound-cert-dcom.png)
 
-*BloodHound showing svc_ca membership in Certificate Service DCOM*
+*BloodHound showing svc_ca membership in Certificate Service DCOM Access*
 
 ## Access as svc_ca
 
@@ -436,7 +436,7 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 
 *NetExec confirming valid credentials for svc_ca*
 
-We now control the `svc_ca` account. Given its membership in `Certificate Service DCOM`, let's enumerate the AD CS environment.
+We now control the `svc_ca` account. Let's enumerate the AD CS environment.
 
 ## Certipy Enumeration
 
@@ -525,11 +525,11 @@ Certipy flags an ESC1 vulnerability on the `Welcome-Template`. The CA name is `W
 
 ## ESC1
 
-ESC1 is a certificate template misconfiguration where the template allows the requester to specify an arbitrary identity in the Subject Alternative Name (SAN) and includes a client authentication EKU. When a user with enrollment rights requests a certificate from this template, they can specify any UPN in the SAN, including a domain admin. The CA issues the certificate without manager approval, and the attacker authenticates to the domain as the impersonated user via PKINIT.
+ESC1 is a certificate template misconfiguration where the template allows the requester to specify an arbitrary identity in the Subject Alternative Name (SAN) and includes a client authentication EKU. When a user with enrollment rights requests a certificate from this template, they can specify any UPN in the SAN, including a domain admin. The CA issues the certificate without manager approval, and the attacker authenticates to the domain as the impersonated user via PKINIT. PKINIT is the Kerberos extension that lets a certificate stand in for a password when requesting a ticket.
 
 The `Welcome-Template` has `Enrollee Supplies Subject` set to `True`, `Client Authentication` enabled, no manager approval, and zero authorized signatures required. `svc_ca` has enrollment rights. This is a textbook ESC1.
 
-We request a certificate as `Administrator`, specifying the Administrator UPN and SID in the request. The SID can be pulled from the Administrator object in BloodHound under the Object Information tab.
+We request a certificate as `Administrator`, specifying the Administrator UPN and SID in the request. The SID can be pulled from the Administrator object in BloodHound under the Object Information tab. It matters because of the strong certificate mapping changes in KB5014754. A patched domain controller maps a certificate to an account by SID rather than trusting the UPN on its own, so a certificate without one can be refused. Certipy's `-sid` flag puts the target SID in the Subject Alternative Name so the mapping holds.
 
 ```
 certipy-ad req -u 'svc_ca@WELCOME.local' -p '0xB1rdWasHere1337' -dc-ip '10.1.92.228' -target 'DC01.WELCOME.LOCAL' -ca 'WELCOME-CA' -template 'Welcome-Template' -upn 'administrator@WELCOME.local' -sid 'S-1-5-21-141921413-1529318470-1830575104-500'
@@ -543,7 +543,7 @@ The certificate is issued and saved as `administrator.pfx`.
 
 ## Certipy Auth
 
-With the PFX in hand, we authenticate to the domain using Certipy. Successful authentication results in a Kerberos TGT for the `Administrator` account and recovers the NTLM hash.
+With the PFX in hand, we authenticate to the domain using Certipy. Successful authentication results in a Kerberos TGT for the `Administrator` account and recovers the NT hash. Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob the KDC packs into the ticket's PAC.
 
 ```
 certipy-ad auth -pfx 'administrator.pfx' -dc-ip '10.1.92.228'
@@ -572,7 +572,7 @@ Certipy retrieves the NT hash `0cf1b799460a39c852068b7c0574677a` for the Adminis
 
 ## Shell as Administrator (root.txt)
 
-Both RDP and WinRM are available on the DC. We connect with Evil-WinRM using the recovered hash.
+Both RDP and WinRM are available on the DC. We connect with Evil-WinRM using the recovered hash. NTLM authenticates with the hash itself rather than the plaintext, so there is nothing left to crack.
 
 ```
 evil-winrm -i '10.1.92.228' -u 'Administrator' -H '0cf1b799460a39c852068b7c0574677a'

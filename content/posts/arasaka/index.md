@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising Arasaka, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement is an assumed breach starting with valid credentials for the standard domain user `faraday`. SMB enumeration validates our access and pulls the full domain user list, and Kerberoasting recovers a crackable hash for the `alt.svc` service account. BloodHound shows `alt.svc` holds `GenericAll` over `Yorinobu`, which we abuse with a Force Password Change after a Targeted Kerberoast comes back uncrackable. `Yorinobu` in turn holds `GenericWrite` over `Soulkiller.svc`, and a second Targeted Kerberoast recovers that account's password. With `Soulkiller.svc` in the `Certificate Service DCOM` group, Certipy identifies an ESC1 misconfiguration on the `AI_Takeover` template. Our first attempt to authenticate as `Administrator` fails because the account's password is expired, so we pivot to a second Domain Administrator, `the_emperor`, recover its NT hash via PKINIT, and dump the NTDS to extract the `Administrator` hash for full domain compromise.
+In this walkthrough, we will be compromising Arasaka, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement is an assumed breach starting with valid credentials for the standard domain user `faraday`. SMB enumeration validates our access and pulls the full domain user list, and Kerberoasting recovers a crackable hash for the `alt.svc` service account. BloodHound shows `alt.svc` holds `GenericAll` over `Yorinobu`, which we abuse with a Force Password Change after a Targeted Kerberoast comes back uncrackable. `Yorinobu` in turn holds `GenericWrite` over `Soulkiller.svc`, and a second Targeted Kerberoast recovers that account's password. `Soulkiller.svc` holds enrollment rights on the `AI_Takeover` template, and Certipy identifies an ESC1 misconfiguration on it. Our first attempt to authenticate as `Administrator` fails because the account's password is expired, so we pivot to a second Domain Administrator, `the_emperor`, recover its NT hash via PKINIT, and dump the NTDS to extract the `Administrator` hash for full domain compromise.
 
 ![Arasaka machine card](images/machine-card.png)
 
@@ -202,7 +202,7 @@ We pull 15 domain users and save them to a `users.txt` file for later. A handful
 
 ## Kerberoasting
 
-With valid credentials we can try Kerberoasting. Kerberoasting targets accounts that have a Service Principal Name (SPN) set. Any authenticated domain user can request a Kerberos service ticket (TGS) for an SPN, and part of that ticket is encrypted with the service account's password hash. We request the ticket, extract the encrypted portion, and crack it offline to recover the plaintext password. All it takes is one valid set of credentials, which we have. The NetExec wiki covers this in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
+With valid credentials we can try Kerberoasting. Kerberoasting targets accounts that have a Service Principal Name (SPN) set. Any authenticated domain user can request a Kerberos service ticket (TGS) for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket, extract the encrypted portion, and crack it offline to recover the plaintext password. All it takes is one valid set of credentials, which we have. The NetExec wiki covers this in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
 
 ```
 nxc ldap hacksmarter.local -u 'faraday' -p 'hacksmarter123' --kerberoasting output.txt
@@ -260,7 +260,7 @@ SMB         10.0.21.50    445    DC01             SYSVOL          READ          
 
 *Validating alt.svc credentials with NetExec*
 
-Credentials confirmed, with the same share access as before. Let's collect BloodHound data as `alt.svc` and map out our permissions.
+Credentials confirmed, with the same share access as before. Let's collect BloodHound data as `alt.svc` and map out our permissions. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ## BloodHound Enumeration
 
@@ -422,11 +422,11 @@ SMB         10.0.21.50    445    DC01             SYSVOL          READ          
 
 *NetExec confirming valid credentials for Soulkiller.svc*
 
-Credentials confirmed. Back in BloodHound we mark `Soulkiller.svc` as owned and review its group memberships. The account is a member of `Certificate Service DCOM`, which points squarely at AD CS abuse. Let's enumerate the CA with Certipy and look for vulnerable templates.
+Credentials confirmed. Back in BloodHound we mark `Soulkiller.svc` as owned and review its group memberships. The account is a member of `Certificate Service DCOM Access`. That group only grants DCOM access to the certificate authority and a default install puts Authenticated Users in it, so it is not a privilege on its own. What it does tell us is that AD CS is deployed here. Let's enumerate the CA with Certipy and look for vulnerable templates.
 
-![BloodHound Certificate Service DCOM](images/bloodhound-cert-dcom.png)
+![BloodHound Certificate Service DCOM Access](images/bloodhound-cert-dcom.png)
 
-*BloodHound showing Soulkiller.svc membership in Certificate Service DCOM*
+*BloodHound showing Soulkiller.svc membership in Certificate Service DCOM Access*
 
 ## Certipy Enumeration
 
@@ -518,11 +518,11 @@ Certipy flags an ESC1 vulnerability on the `AI_Takeover` template. The CA is `ha
 
 ## ESC1
 
-ESC1 is a certificate template misconfiguration where the template allows the requester to specify an arbitrary identity in the Subject Alternative Name (SAN) and includes a client authentication EKU. When a user with enrollment rights requests a certificate from this template, they can supply any UPN in the SAN, including a domain admin. The CA issues the certificate without manager approval, and the attacker authenticates to the domain as the impersonated user via PKINIT. The Certipy wiki covers the full attack [here](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation).
+ESC1 is a certificate template misconfiguration where the template allows the requester to specify an arbitrary identity in the Subject Alternative Name (SAN) and includes a client authentication EKU. When a user with enrollment rights requests a certificate from this template, they can supply any UPN in the SAN, including a domain admin. The CA issues the certificate without manager approval, and the attacker authenticates to the domain as the impersonated user via PKINIT. PKINIT is the Kerberos extension that lets a certificate stand in for a password when requesting a ticket. The Certipy wiki covers the full attack [here](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation).
 
 The `AI_Takeover` template has `Enrollee Supplies Subject` set to `True`, `Client Authentication` enabled, no manager approval, and zero authorized signatures required. `Soulkiller.svc` has enrollment rights. This is a textbook ESC1.
 
-We request a certificate as `Administrator`, specifying the Administrator UPN and SID in the request. The SID can be pulled from the Administrator object in BloodHound under the Object Information tab.
+We request a certificate as `Administrator`, specifying the Administrator UPN and SID in the request. The SID can be pulled from the Administrator object in BloodHound under the Object Information tab. It matters because of the strong certificate mapping changes in KB5014754. A patched domain controller maps a certificate to an account by SID rather than trusting the UPN on its own, so a certificate without one can be refused. Certipy's `-sid` flag puts the target SID in the Subject Alternative Name so the mapping holds.
 
 ```
 certipy-ad req -u 'soulkiller.svc' -p 'MYpassword123#' -dc-ip '10.0.21.50' -target 'dc01.hacksmarter.local' -ca 'hacksmarter-DC01-CA' -template 'AI_Takeover' -upn 'administrator@hacksmarter.local' -sid 'S-1-5-21-3154413470-3340737026-2748725799-500'
@@ -616,11 +616,11 @@ certipy-ad auth -pfx 'the_emperor.pfx' -dc-ip '10.0.21.50'
 
 *Certipy PKINIT authentication: TGT and NT hash recovered for the_emperor*
 
-`the_emperor`'s password is valid and Certipy retrieves the NT hash `d87640b0d83dc7f90f5f30bd6789b133`. Since `the_emperor` is a Domain Administrator, this is domain-level access.
+Nothing in `the_emperor`'s password state blocks the KDC this time, so the TGT comes back and Certipy retrieves the NT hash `d87640b0d83dc7f90f5f30bd6789b133`. It gets that hash by requesting a Kerberos ticket to itself and reading the credential blob the KDC packs into the ticket's PAC. Since `the_emperor` is a Domain Administrator, this is domain-level access.
 
 ## Shell as the_emperor
 
-Both RDP and WinRM are available on the DC, so we connect with Evil-WinRM using the recovered hash.
+Both RDP and WinRM are available on the DC, so we connect with Evil-WinRM using the recovered hash. NTLM authenticates with the hash itself rather than the plaintext, so there is nothing left to crack.
 
 ```
 evil-winrm -i 10.0.21.50 -u 'the_emperor' -H 'd87640b0d83dc7f90f5f30bd6789b133'
@@ -642,7 +642,7 @@ whoami /priv
 
 ## NTDS Dump
 
-With Domain Admin rights through `the_emperor`, we can dump the NTDS database. NTDS.dit is the Active Directory database on the domain controller, and it stores the password hashes for every account in the domain. Reading it requires privileged access to the DC, which we now have. NetExec handles the extraction remotely and we scope it to the `Administrator` account. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
+With Domain Admin rights through `the_emperor`, we can dump the NTDS database. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. NetExec does not read that file. It asks the DC to replicate the account we want using the same protocol domain controllers use to sync with each other, which is why our administrative rights are all we need. We scope it to the `Administrator` account. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
 
 ```
 nxc smb 10.0.21.50 -u 'the_emperor' -H 'd87640b0d83dc7f90f5f30bd6789b133' --ntds --user Administrator
@@ -652,9 +652,11 @@ nxc smb 10.0.21.50 -u 'the_emperor' -H 'd87640b0d83dc7f90f5f30bd6789b133' --ntds
 
 *NTDS dump: Administrator NT hash recovered via NetExec*
 
+The dump returns the `Administrator` NT hash `4366ec0f86e29be2a4a5e87a1ba922ec`.
+
 ## Shell as Administrator (root.txt)
 
-With the `Administrator` NT hash from the NTDS dump, we log in with Evil-WinRM. Password expiration is a policy state, not a change to the account's stored NT hash, so the hash itself stays valid. The KDC enforces that state before issuing a Kerberos ticket, which is why our earlier PKINIT attempt failed, but NTLM authentication over WinRM does not check it. Passing the hash directly authenticates us and gets us the session Kerberos would not.
+With the `Administrator` NT hash from the NTDS dump, we log in with Evil-WinRM. Password expiration is a policy state and it does not change the account's stored NT hash, so the hash we just pulled is still the right one. The KDC checks that state before it will issue a Kerberos ticket, which is why our PKINIT attempt failed. Passing the hash over WinRM still authenticates and gets us the session Kerberos would not.
 
 ```
 evil-winrm -i 10.0.21.50 -u 'Administrator' -H '4366ec0f86e29be2a4a5e87a1ba922ec'

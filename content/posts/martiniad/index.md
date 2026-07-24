@@ -114,7 +114,7 @@ SMB         10.1.62.227     445    DC01             SYSVOL                      
 
 *Anonymous authentication mapping to Guest with READ and WRITE on the notes share*
 
-The anonymous logon is accepted and mapped to the `Guest` account. That gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`, which typically lets us enumerate domain users once we have a real account to authenticate with. The `notes` share is the obvious first stop.
+The anonymous logon is accepted and mapped to the `Guest` account. That gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`, which is the named pipe share that user and group enumeration runs over. The `notes` share is the obvious first stop.
 
 ## Smbclient
 
@@ -184,7 +184,7 @@ SMB         10.1.62.227     445    DC01             SYSVOL          READ        
 
 *Validating mprice credentials with NetExec*
 
-Credentials confirmed. `mprice` adds READ on `NETLOGON` and `SYSVOL`, both standard logon shares, and no share appears that anonymous access had not already shown us. Let's collect BloodHound data and see what the domain looks like.
+Credentials confirmed. `mprice` adds READ on `NETLOGON` and `SYSVOL`, both standard logon shares, and no share appears that anonymous access had not already shown us. Let's collect BloodHound data and see what the domain looks like. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ## BloodHound Enumeration
 
@@ -203,11 +203,11 @@ LDAP        10.1.62.227     389    DC01             [-] BloodHound collection fa
 
 *NetExec resolving the collection methods and then failing on the LDAPS handshake*
 
-Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner points at the cause: `channel binding:No TLS cert` means it could not retrieve a TLS certificate from the domain controller, and 636 and 3269 both came back as `tcpwrapped` in our scan. LDAPS is listening but never completes a usable handshake, so the secure channel the collector wants is not there. Rather than fight the collector we work with what a single valid credential already buys us and go after Kerberos directly.
+Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner points at the cause: `channel binding:No TLS cert` is what NetExec reports when it cannot complete a TLS handshake with the domain controller, and 636 and 3269 both came back as `tcpwrapped` in our scan. LDAPS is listening but never completes a usable handshake, so the secure channel the collector wants is not there. Rather than fight the collector we work with what a single valid credential already buys us and go after Kerberos directly.
 
 ## Kerberoasting
 
-Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with the service account's password hash. We request the ticket, pull the encrypted portion out, and crack it offline without ever authenticating as the target. One valid credential is the only requirement and we have that now. The NetExec wiki covers the attack in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
+Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket, pull the encrypted portion out, and crack it offline without ever authenticating as the target. One valid credential is the only requirement and we have that now. The NetExec wiki covers the attack in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --kerberoasting output.txt --dns-server 10.1.62.227
@@ -335,7 +335,7 @@ The first four attempts drop on NETBIOS connection timeouts rather than returnin
 
 ## NTDS Dump
 
-The goal for this lab is the `krbtgt` NT hash. NTDS.dit is the Active Directory database that lives on the domain controller and it stores the password hashes for every account in the domain, so administrative access to the DC is all we need to read it. NetExec handles the extraction remotely and we scope the output to `krbtgt` rather than printing every account in the domain. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
+The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database that lives on the domain controller and it holds the password hashes for every account in the domain. NetExec does not read that file. It asks the DC to replicate the account we want using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
 
 ```
 nxc smb 10.1.62.227 -u 'athena.t0' -p '1dirtymartini' --ntds --user krbtgt
