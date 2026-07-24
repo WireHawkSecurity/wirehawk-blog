@@ -106,7 +106,7 @@
   color: #888888;
   cursor: text;
   -webkit-user-select: all;
-  flex: 0 1 auto;
+  flex: 1;
   min-width: 0;
   user-select: all;
   white-space: nowrap;
@@ -145,6 +145,17 @@
 .subscribe-link-btn {
   display: inline-block;
   text-decoration: none !important;
+}
+
+/* ── Even Row Widths ──
+   Both boxes use flex: 1 and both buttons share a min-width, so the
+   email input and the RSS URL box render at identical widths and the
+   two buttons align vertically. */
+
+.post-content .subscribe-email-form .subscribe-form-btn,
+.post-content .subscribe-rss-row .subscribe-form-btn {
+  min-width: 6.5rem;
+  text-align: center;
 }
 
 /* ── Subscribe Status Message ── */
