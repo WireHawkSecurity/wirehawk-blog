@@ -1,16 +1,14 @@
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {
-  'ad_storage': 'denied',
-  'ad_user_data': 'denied',
-  'ad_personalization': 'denied',
-  'analytics_storage': 'denied'
-});
-</script>
-
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+
+{{- /* Cloudflare Web Analytics. Cookieless, sets no client-side state, so no
+       consent banner is required. Gated on hugo.IsProduction so it does not
+       fire during `hugo server` (which runs in development). Registered at the
+       apex, so postfix matching covers both wirehawksecurity.com and
+       blog.wirehawksecurity.com from this one token. */ -}}
+{{- if hugo.IsProduction }}
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "5934cb0643184800a4ca1bfeeb849b44"}'></script>
+{{- end }}

@@ -127,15 +127,13 @@
     });
   }
 
-  // Subscribe CTA on post pages
-  if (window.location.pathname.indexOf('/posts/') !== -1) {
-    var postContent = document.querySelector('.post-content');
-    if (postContent) {
-      var cta = document.createElement('div');
-      cta.className = 'subscribe-cta';
-      cta.innerHTML = 'Never miss a post. <a href="/subscribe/">Subscribe for updates</a>.';
-      postContent.appendChild(cta);
-    }
+  // Subscribe CTA (this whole block only renders on post pages)
+  var postContent = document.querySelector('.post-content');
+  if (postContent) {
+    var cta = document.createElement('div');
+    cta.className = 'subscribe-cta';
+    cta.innerHTML = 'Never miss a post. <a href="/subscribe/">Subscribe for updates</a>.';
+    postContent.appendChild(cta);
   }
 })();
 </script>

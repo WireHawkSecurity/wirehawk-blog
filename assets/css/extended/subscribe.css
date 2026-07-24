@@ -142,11 +142,6 @@
 
 /* ── Email Subscribe Link ── */
 
-.subscribe-link-btn {
-  display: inline-block;
-  text-decoration: none !important;
-}
-
 /* ── Matched Row Widths ──
    The email input and the RSS URL box are sized by a single shared
    declaration, so they render at identical widths no matter what the
