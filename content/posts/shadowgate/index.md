@@ -187,7 +187,7 @@ We import the data into BloodHound and review the outbound object control for `j
 
 *BloodHound GenericWrite: jtrueblood over bbrown*
 
-We also notice that `bbrown` is a member of the `ADCS-READERS` group, which could give us a path into AD CS later.
+We also notice that `bbrown` is a member of the `ADCS-READERS` group.
 
 ![bbrown ADCS-READERS group](images/bbrown-adcs-reader-group.png)
 
@@ -261,7 +261,7 @@ SMB         10.0.30.253    445    DC01             SYSVOL          READ         
 
 *Validating bbrown credentials with NetExec*
 
-Credentials confirmed. No new shares compared to `jtrueblood`. Back in BloodHound, `bbrown` has no outbound object control, but the `ADCS-READERS` group membership stands out. Let's enumerate AD CS for misconfigurations.
+Credentials confirmed. No new shares compared to `jtrueblood`. Back in BloodHound, `bbrown` has no outbound object control, but the `ADCS-READERS` group membership stands out.
 
 ## Certipy Enumeration
 
@@ -484,8 +484,8 @@ The access denied line is expected. NetExec first tries to open remote registry 
 
 ## Final Thoughts
 
-ShadowGate is a solid easy-difficulty lab that covers a realistic AD attack chain. Starting from anonymous access with no credentials, I chained AS-REP Roasting into a BloodHound-guided ACL abuse path, pivoted through a Targeted Kerberoast, and landed on an ESC8 misconfiguration that gave me the keys to the kingdom. Using Certipy's built-in relay instead of `impacket-ntlmrelayx` kept the ESC8 portion clean.
+ShadowGate runs an anonymous-access AD chain end to end without a single credential to start. I chained AS-REP Roasting into a BloodHound-guided ACL abuse path, pivoted through a Targeted Kerberoast, and landed on an ESC8 misconfiguration that gave me the keys to the kingdom. Using Certipy's built-in relay instead of `impacket-ntlmrelayx` kept the ESC8 portion clean.
 
-The ESC8 portion is what makes this lab stand out. NTLM relay attacks against AD CS web enrollment are something defenders need to be aware of. Disabling HTTP-based enrollment, enforcing HTTPS with channel binding (EPA), and restricting which templates are published on the CA are all critical hardening steps. The ACL chain from `jtrueblood` to `bbrown` via `GenericWrite` shows exactly why defenders need to be auditing object-level permissions in Active Directory. Tools like BloodHound make these paths visible, and defenders should be running the same queries attackers do.
+The ESC8 portion is what makes this lab stand out. NTLM relay attacks against AD CS web enrollment are something defenders need to be aware of. Disabling HTTP-based enrollment, enforcing HTTPS with channel binding (EPA), and restricting which templates are published on the CA are all critical hardening steps. The ACL chain from `jtrueblood` to `bbrown` via `GenericWrite` shows exactly why defenders need to be auditing object-level permissions in Active Directory. ESC8 is also why SMB signing gives a false sense of safety here: signing protects the SMB-to-SMB relay path and does nothing for the cross-protocol SMB-to-HTTP hop that AD CS web enrollment exposes.
 
 — 0xB1rd

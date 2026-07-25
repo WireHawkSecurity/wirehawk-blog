@@ -114,7 +114,7 @@ SMB         10.1.62.227     445    DC01             SYSVOL                      
 
 *Anonymous authentication mapping to Guest with READ and WRITE on the notes share*
 
-The anonymous logon is accepted and mapped to the `Guest` account. That gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`, which is the named pipe share that user and group enumeration runs over. The `notes` share is the obvious first stop.
+The anonymous logon is accepted and mapped to the `Guest` account. That gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`, which is the named pipe share that user and group enumeration runs over. READ and WRITE on a non-standard share is the lead worth following first.
 
 ## Smbclient
 
@@ -158,7 +158,7 @@ mprice:*martini*
 
 *Work notes left on an open share containing plaintext credentials for mprice*
 
-A personal to-do list, and the last two lines hand us a credential. The third item is a nice touch of realism, since testing that a share works from a non-Windows client is exactly the kind of thing that leads to permissions getting loosened and never restored. We have `mprice:*martini*`.
+A personal to-do list, and the last two lines hand us a credential: `mprice:*martini*`.
 
 ## Access as mprice
 
@@ -203,11 +203,11 @@ LDAP        10.1.62.227     389    DC01             [-] BloodHound collection fa
 
 *NetExec resolving the collection methods and then failing on the LDAPS handshake*
 
-Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner points at the cause: `channel binding:No TLS cert` is what NetExec reports when it cannot complete a TLS handshake with the domain controller, and 636 and 3269 both came back as `tcpwrapped` in our scan. LDAPS is listening but never completes a usable handshake, so the secure channel the collector wants is not there. Rather than fight the collector we work with what a single valid credential already buys us and go after Kerberos directly.
+Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner points at the cause: `channel binding:No TLS cert` is what NetExec reports when it cannot complete a TLS handshake with the domain controller, and 636 and 3269 both came back as `tcpwrapped` in our scan. LDAPS is listening but never completes a usable handshake, so the secure channel the collector wants is not there. BloodHound would have mapped the paths for us, but it is a convenience here, not a requirement. Kerberoasting needs nothing more than a valid domain credential, which we already have, so we go straight at it.
 
 ## Kerberoasting
 
-Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket, pull the encrypted portion out, and crack it offline without ever authenticating as the target. One valid credential is the only requirement and we have that now. The NetExec wiki covers the attack in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
+Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that encrypted portion offline, so the account we are attacking never sees a login attempt. The only requirement is a single valid credential, which we now have. The NetExec wiki covers the attack in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --kerberoasting output.txt --dns-server 10.1.62.227
@@ -331,11 +331,11 @@ SMB         10.1.62.227     445    DC01             [+] DRY.MARTINI.BARS\ATHENA_
 
 *Password spray: athena.t0 reuses the ATHENA_SVC password and comes back Pwn3d!*
 
-The first four attempts drop on NETBIOS connection timeouts rather than returning a logon result, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` were never actually tested against this password. The two that do complete both authenticate. `ATHENA_SVC` we already had. `athena.t0` is new, and NetExec tags it `(Pwn3d!)`. That flag means the account has administrative access on the target, and the target here is the domain controller. The password reuse we suspected is real, and a service account crack just turned into control of the DC.
+The first four attempts drop on NETBIOS connection timeouts rather than returning a logon result, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` were never actually tested against this password. The two that do complete both authenticate. `ATHENA_SVC` we already had. `athena.t0` is new, and NetExec tags it `(Pwn3d!)`. That flag means the account has administrative access on the target, and the target here is the domain controller. The reuse we suspected is real: the password cracked off a service account also logs in as the `athena.t0` tier 0 admin, and that account owns the DC.
 
 ## NTDS Dump
 
-The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database that lives on the domain controller and it holds the password hashes for every account in the domain. NetExec does not read that file. It asks the DC to replicate the account we want using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
+The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. We never touch the file directly. Instead NetExec asks the DC to replicate the one account we want, using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
 
 ```
 nxc smb 10.1.62.227 -u 'athena.t0' -p '1dirtymartini' --ntds --user krbtgt

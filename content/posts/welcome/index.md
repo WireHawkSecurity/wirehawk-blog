@@ -157,7 +157,7 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 
 *NetExec share enumeration as e.hills with Human Resources share visible*
 
-We have READ access to a `Human Resources` share, which is non-standard and worth investigating. Let's connect to the share and see what it contains.
+There is READ access to a `Human Resources` share, which is non-standard and worth investigating. Let's take a look at what it contains.
 
 ## Smbclient
 
@@ -217,7 +217,7 @@ The PDF password cracks to `humanresources`. Opening the document with this pass
 
 *Welcome Start Guide containing the default account password Welcome2025!@*
 
-This is exactly the kind of finding that turns a limited foothold into broader access. We now have a default password that may still be in use across the domain.
+We now have a default password that may still be in use across the domain.
 
 ## Password Spraying
 
@@ -314,7 +314,7 @@ We have a shell on the DC and can grab `user.txt` from the desktop of `a.harris`
 
 ## Targeted Kerberoast
 
-`GenericAll` over `i.park` gives us full control of that account. BloodHound suggests two abuse paths: a Targeted Kerberoast and a Force Password Change. We try the Targeted Kerberoast first using [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast). This tool automates the process of setting an SPN on a target account, requesting the TGS, and cleaning up the SPN after.
+`GenericAll` over `i.park` gives us full control of that account. BloodHound suggests two abuse paths: a Targeted Kerberoast and a Force Password Change. We try the Targeted Kerberoast first using [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast). This tool sets an SPN on the target account, requests the TGS, and cleans up the SPN after.
 
 ```
 ./targetedKerberoast.py -d WELCOME.local --dc-ip 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@'
@@ -402,7 +402,7 @@ Looking at both targets, `svc_ca` is the priority. The name and its membership i
 
 ## Access as svc_ca
 
-We use the same Force Password Change technique, this time authenticating as `i.park` to reset `svc_ca`'s password.
+Using the same Force Password Change technique, we authenticate as `i.park` to reset `svc_ca`'s password.
 
 ```
 net rpc password "svc_ca" "0xB1rdWasHere1337" -U "WELCOME.local"/"i.park"%"0xB1rdWasHere1337" -S "10.1.92.228"
@@ -590,8 +590,8 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 ## Final Thoughts
 
-Welcome is a solid easy-difficulty lab that covers a well-rounded AD attack chain. The engagement starts with phishing credentials and chains through SMB enumeration, PDF password cracking, password spraying, BloodHound-guided ACL abuse, and ESC1 exploitation. I liked that the Targeted Kerberoast path was a dead end, forcing a pivot to Force Password Change. That kind of trial-and-error is realistic and reinforces why it pays to have multiple abuse paths in mind.
+Welcome runs a full AD chain from a phished credential to Domain Administrator. The engagement chains SMB enumeration, PDF password cracking, password spraying, BloodHound-guided ACL abuse, and ESC1 exploitation. The Targeted Kerberoast path being a dead end, forcing a pivot to Force Password Change, is a good reminder to keep multiple abuse paths in mind rather than committing to the first one.
 
-The key takeaways are keeping default passwords out of shared documents, auditing `ForceChangePassword` and `GenericAll` permissions in Active Directory, and reviewing certificate templates for `Enrollee Supplies Subject`. ESC1 is one of the most commonly exploited AD CS misconfigurations, and any template where the requester controls the SAN should be locked down or removed unless there is a clear operational need. Tools like BloodHound and Certipy make these paths visible, and defenders should be running the same queries attackers do.
+The key takeaways are keeping default passwords out of shared documents, auditing `ForceChangePassword` and `GenericAll` permissions in Active Directory, and reviewing certificate templates for `Enrollee Supplies Subject`. ESC1 is one of the most commonly exploited AD CS misconfigurations, and any template where the requester controls the SAN should be locked down or removed unless there is a clear operational need. The default password sitting in a shared PDF is what started the whole chain, and it is the cheapest thing on this list to get right.
 
 — 0xB1rd
