@@ -27,8 +27,8 @@ What I appreciate about the platform is that the difficulty actually scales. The
 
 The BugForge Discord is worth joining. People share their approaches, talk through methodology, and help each other out. Alex is in there regularly too, answering questions and taking feedback that shapes the platform. I've picked up a lot from the community side of things. Seeing how someone else works through the same lab from a completely different angle has pushed my own methodology in ways I wouldn't have gotten to on my own.
 
-If you're looking for a free platform to practice web app pentesting, give BugForge a look.
+BugForge costs nothing, the labs hold up, and there is an active community behind it. That combination is rare enough that it has stayed in my rotation.
 
-Check it out at [app.bugforge.io](https://app.bugforge.io/).
+You can find it at [app.bugforge.io](https://app.bugforge.io/).
 
 — 0xB1rd

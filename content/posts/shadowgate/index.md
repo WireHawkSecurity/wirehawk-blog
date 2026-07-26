@@ -1,7 +1,7 @@
 ---
 title: "ShadowGate 🏯 | Hack Smarter Labs"
 date: 2026-06-15
-summary: "An easy-difficulty AD lab chaining anonymous SMB enumeration, AS-REP Roasting, Targeted Kerberoasting, and ESC8 NTLM relay to extract the krbtgt hash for full domain compromise."
+summary: "An easy-difficulty Active Directory lab chaining anonymous SMB enumeration, AS-REP Roasting, Targeted Kerberoasting, and ESC8 NTLM relay to extract the krbtgt hash for full domain compromise."
 platforms: ["Hack Smarter Labs"]
 tags: ["Active Directory"]
 difficulty: "Easy"
@@ -37,7 +37,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## Open Ports
 
-Open ports were provided under the machine details tab so we skip port scanning for now. The LDAP banner confirms the domain as `shadow.gate`. Add `shadow.gate` to `/etc/hosts` before continuing.
+The machine details tab provides the open ports, so we skip port scanning for now. The LDAP banner confirms the domain as `shadow.gate`. Add `shadow.gate` to `/etc/hosts` before continuing.
 
 ```
 53/tcp    open  domain        Simple DNS Plus
@@ -57,7 +57,7 @@ Open ports were provided under the machine details tab so we skip port scanning 
 9389/tcp  open  mc-nmf        .NET Message Framing
 ```
 
-We see the ports we would expect from a domain controller. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. We have no credentials, so let's start enumerating with anonymous access.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. We have no credentials, so let's start enumerating with anonymous access.
 
 ## SMB Enumeration
 
@@ -191,11 +191,11 @@ We also notice that `bbrown` is a member of the `ADCS-READERS` group.
 
 ![bbrown ADCS-READERS group](images/bbrown-adcs-reader-group.png)
 
-*bbrown group membership showing ADCS-READERS in BloodHound*
+*BloodHound showing bbrown membership in ADCS-READERS*
 
 ## Targeted Kerberoast
 
-Since `jtrueblood` has `GenericWrite` over `bbrown`, we can perform a Targeted Kerberoast. `GenericWrite` allows us to set a Service Principal Name (SPN) on `bbrown`'s account, making it Kerberoastable. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) automates this by setting the SPN, requesting the TGS, and cleaning up after.
+Since `jtrueblood` has `GenericWrite` over `bbrown`, we can perform a Targeted Kerberoast. `GenericWrite` allows us to set a Service Principal Name (SPN) on `bbrown`'s account, making it Kerberoastable. targetedKerberoast.py automates this by setting the SPN, requesting the TGS, and cleaning up after.
 
 ```
 ./targetedKerberoast.py -v -d 'shadow.gate' -u 'jtrueblood' -p 'blood_brothers'
@@ -265,7 +265,7 @@ Credentials confirmed. No new shares compared to `jtrueblood`. Back in BloodHoun
 
 ## Certipy Enumeration
 
-The `ADCS-READERS` membership is our cue to look at AD CS. Any authenticated account can enumerate the CA, so we run [Certipy](https://github.com/ly4k/Certipy) as `bbrown`.
+The `ADCS-READERS` membership is our cue to look at AD CS. Any authenticated account can enumerate the CA, so we run Certipy as `bbrown`.
 
 ```
 certipy-ad find -u 'bbrown' -p '12345678' -dc-ip '10.0.30.253' -stdout -vulnerable
@@ -308,7 +308,7 @@ Certificate Templates                   : [!] Could not find any certificate tem
 
 *Certipy ESC8: Web Enrollment enabled over HTTP on shadow-DC01-CA*
 
-Certipy flags an ESC8 vulnerability: Web Enrollment is enabled over HTTP with no HTTPS enforcement. No vulnerable templates were returned with the `-vulnerable` flag though, so we run Certipy again without it to see all templates.
+Certipy flags an ESC8 vulnerability: Web Enrollment is enabled over HTTP with no HTTPS enforcement. The `-vulnerable` flag returns no templates though, so we run Certipy again without it to see all templates.
 
 ```
 certipy-ad find -u 'bbrown' -p '12345678' -dc-ip '10.0.30.253' -stdout
@@ -369,7 +369,7 @@ The full template list shows a `DomainController` template that is enabled and p
 
 ## ESC8
 
-ESC8 is an AD CS attack where an HTTP-based certificate enrollment endpoint accepts NTLM authentication without enforcing channel binding (EPA) or requiring HTTPS. Nothing gets cracked in a relay. We take an authentication that a victim sends us and pass it straight through to a service that accepts it, so the service sees the victim rather than us. That lets us relay a coerced NTLM authentication from a Domain Controller to the web enrollment endpoint and request a certificate on its behalf. The relayed session enrolls a certificate which can then be used to authenticate via Kerberos PKINIT, the extension that lets a certificate stand in for a password when requesting a ticket. This is not a misconfigured template but a weakness in how the CA's web enrollment service handles authentication.
+ESC8 is an AD CS attack where an HTTP-based certificate enrollment endpoint accepts NTLM authentication without enforcing channel binding (EPA) or requiring HTTPS. Nothing gets cracked in a relay. We take an authentication that a victim sends us and pass it straight through to a service that accepts it, so the service sees the victim rather than us. That lets us relay a coerced NTLM authentication from a Domain Controller to the web enrollment endpoint and request a certificate on its behalf. We then use that certificate to authenticate via Kerberos PKINIT, the extension that lets a certificate stand in for a password when requesting a ticket. The weakness sits in how the CA's web enrollment service handles authentication rather than in any template.
 
 For ESC8 to work we need a template that the relayed identity is authorized to enroll in. Since we are coercing and relaying the `DC01$` machine account, we need a template where Domain Controllers have enrollment rights. The `DomainController` template fits: it includes the Client Authentication EKU that PKINIT needs, grants enrollment rights to Domain Controllers, and does not require manager approval or authorized signatures.
 
@@ -400,7 +400,7 @@ COERCE_PLUS 10.0.30.253    445    DC01             VULNERABLE, PetitPotam
 COERCE_PLUS 10.0.30.253    445    DC01             Exploit Success, efsrpc\EfsRpcAddUsersToFile
 ```
 
-Both the coercion target and the relay target are the same host, which is the part that surprises people. We are not relaying the DC's authentication back into SMB on the DC. We are carrying it across to the HTTP enrollment endpoint, and that cross-protocol hop is what makes relaying back to the same host work. Back in our Certipy relay window we see the authentication relayed and a certificate issued.
+The coercion target and the relay target are the same host. We are not relaying the DC's authentication back into SMB on the DC. We are carrying it across to the HTTP enrollment endpoint, and that cross-protocol hop is what makes relaying back to the same host work. Back in our Certipy relay window we see the authentication relayed and a certificate issued.
 
 ```
 [*] (SMB): Received connection from 10.0.30.253, attacking target http://10.0.30.253
@@ -455,11 +455,11 @@ Certipy v5.0.4 - by Oliver Lyak (ly4k)
 
 *Certipy PKINIT: TGT and NT hash for DC01$*
 
-Certipy authenticates with the certificate and retrieves the NT hash for the `DC01$` machine account. It gets that hash by requesting a Kerberos ticket to itself and reading the credential blob the KDC packs into the ticket's PAC. We now have both a ccache file and the NT hash.
+Certipy authenticates with the certificate and retrieves the NT hash for the `DC01$` machine account. Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob the KDC packs into the ticket's PAC. We now have both a ccache file and the NT hash.
 
 ## NTDS Dump
 
-With the NT hash for `DC01$` we can dump the NTDS and pull the `krbtgt` hash with NetExec. NTLM authenticates with the hash itself rather than the plaintext, so there is nothing to crack. `krbtgt` is the account whose key encrypts every TGT the domain issues, which is why its hash is the one worth having. NetExec does not read NTDS.dit off disk. It asks the DC to replicate the account we want using the same protocol domain controllers use to sync with each other.
+With the NT hash for `DC01$` we can dump the NTDS and pull the `krbtgt` hash with NetExec. NTLM authenticates with the hash itself rather than the plaintext, so there is nothing left to crack. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. We never touch the file directly. Instead NetExec asks the DC to replicate the one account we want, using the same protocol domain controllers use to sync with each other, which is why a domain controller machine account is all we need. We scope the output to `krbtgt` rather than printing every account in the domain.
 
 ```
 nxc smb 10.0.30.253 -u 'DC01$' -H 'aad3b435b51404eeaad3b435b51404ee:a29353e7dcd23e7f5e33d9a1dcfeaf45' --ntds --user KRBTGT
@@ -484,7 +484,7 @@ The access denied line is expected. NetExec first tries to open remote registry 
 
 ## Final Thoughts
 
-ShadowGate runs an anonymous-access AD chain end to end without a single credential to start. I chained AS-REP Roasting into a BloodHound-guided ACL abuse path, pivoted through a Targeted Kerberoast, and landed on an ESC8 misconfiguration that gave me the keys to the kingdom. Using Certipy's built-in relay instead of `impacket-ntlmrelayx` kept the ESC8 portion clean.
+Everything in ShadowGate hangs on one condition: the domain controller accepts an anonymous SMB session and hands over the full user list. I chained AS-REP Roasting into a BloodHound-guided ACL abuse path, pivoted through a Targeted Kerberoast, and landed on an ESC8 misconfiguration that gave me the keys to the kingdom. Using Certipy's built-in relay instead of `impacket-ntlmrelayx` kept the ESC8 portion clean.
 
 The ESC8 portion is what makes this lab stand out. NTLM relay attacks against AD CS web enrollment are something defenders need to be aware of. Disabling HTTP-based enrollment, enforcing HTTPS with channel binding (EPA), and restricting which templates are published on the CA are all critical hardening steps. The ACL chain from `jtrueblood` to `bbrown` via `GenericWrite` shows exactly why defenders need to be auditing object-level permissions in Active Directory. ESC8 is also why SMB signing gives a false sense of safety here: signing protects the SMB-to-SMB relay path and does nothing for the cross-protocol SMB-to-HTTP hop that AD CS web enrollment exposes.
 

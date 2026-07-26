@@ -1,7 +1,7 @@
 ---
 title: "MartiniAD 🍸 | Hack Smarter Labs"
 date: 2026-07-23
-summary: "An easy-difficulty AD lab chaining anonymous SMB access, plaintext credentials left on an open share, Kerberoasting, and password reuse on a tier 0 admin account to dump NTDS and recover the krbtgt hash."
+summary: "An easy-difficulty Active Directory lab chaining anonymous SMB access, plaintext credentials left on an open share, Kerberoasting, and password reuse on a tier 0 admin account to dump NTDS and recover the krbtgt hash."
 platforms: ["Hack Smarter Labs"]
 tags: ["Active Directory"]
 difficulty: "Easy"
@@ -31,7 +31,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## RustScan
 
-We use [RustScan](https://github.com/bee-san/RustScan) for initial port discovery. RustScan finds the open ports quickly and hands them off to Nmap for service detection and script scanning. The `-a` flag sets the target and everything after `--` is passed straight through to Nmap, so `-sC` runs the default scripts and `-sV` probes for service versions.
+We use RustScan for initial port discovery. RustScan finds the open ports quickly and hands them off to Nmap for service detection and script scanning.
 
 ```
 rustscan -a 10.1.62.227 -- -sC -sV
@@ -86,7 +86,7 @@ PORT      STATE SERVICE       REASON          VERSION
 51021/tcp open  msrpc         syn-ack ttl 126 Microsoft Windows RPC
 ```
 
-Everything we would expect from a domain controller. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner gives us the domain as `DRY.MARTINI.BARS`, and the RDP certificate and NTLM info confirm the hostname as `DC01.DRY.MARTINI.BARS`. Add both to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner gives us the domain as `DRY.MARTINI.BARS`, and the RDP certificate and NTLM info confirm the hostname as `DC01.DRY.MARTINI.BARS`. Add both to `/etc/hosts` before continuing.
 
 ## SMB Enumeration
 
@@ -203,11 +203,11 @@ LDAP        10.1.62.227     389    DC01             [-] BloodHound collection fa
 
 *NetExec resolving the collection methods and then failing on the LDAPS handshake*
 
-Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner points at the cause: `channel binding:No TLS cert` is what NetExec reports when it cannot complete a TLS handshake with the domain controller, and 636 and 3269 both came back as `tcpwrapped` in our scan. LDAPS is listening but never completes a usable handshake, so the secure channel the collector wants is not there. BloodHound would have mapped the paths for us, but it is a convenience here, not a requirement. Kerberoasting needs nothing more than a valid domain credential, which we already have, so we go straight at it.
+Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner is the first clue: `channel binding:No TLS cert` is what it reports when it could not retrieve a TLS certificate from the domain controller, and 636 and 3269 both come back as `tcpwrapped` in our scan. Between the two, LDAPS is listening but never gives the collector the secure channel it wants. BloodHound would have mapped the paths for us, but it is a convenience here, not a requirement. Kerberoasting needs nothing more than a valid domain credential, which we already have, so we go straight at it.
 
 ## Kerberoasting
 
-Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that encrypted portion offline, so the account we are attacking never sees a login attempt. The only requirement is a single valid credential, which we now have. The NetExec wiki covers the attack in more detail [here](https://www.netexec.wiki/ldap-protocol/kerberoasting).
+Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that encrypted portion offline, so the account we are attacking never sees a login attempt. The only requirement is a single valid credential, which we now have.
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --kerberoasting output.txt --dns-server 10.1.62.227
@@ -226,7 +226,7 @@ LDAP        10.1.62.227     389    DC01             $krb5tgs$23$*ATHENA_SVC$DRY.
 
 *Kerberoasting: ATHENA_SVC TGS hash captured via NetExec*
 
-One roastable account comes back. `ATHENA_SVC` has an SPN set and sits in both `Remote Management Users` and `Remote Desktop Users`, so whoever provisioned it expected the account to log in remotely over WinRM and RDP rather than just run a service. NetExec writes the hash to `output.txt` and we crack it with john.
+One roastable account comes back. `ATHENA_SVC` has an SPN set and sits in both `Remote Management Users` and `Remote Desktop Users`, so the account is provisioned to log in remotely over WinRM and RDP rather than just run a service. NetExec writes the hash to `output.txt` and we crack it with john.
 
 ```
 john output.txt --wordlist=/usr/share/wordlists/rockyou.txt
@@ -273,7 +273,7 @@ SMB         10.1.62.227     445    DC01             SYSVOL          READ        
 
 *Validating ATHENA_SVC credentials with NetExec*
 
-Credentials confirmed, but the share list is the same as what `mprice` had and BloodHound collection still fails. What we do have is READ on `IPC$` and a service account password, which is enough to start looking at the rest of the domain.
+Credentials confirmed, and the share list matches what `mprice` had. What we do have is READ on `IPC$` and a service account password, which is enough to start looking at the rest of the domain.
 
 ## Password Spraying
 
@@ -331,11 +331,11 @@ SMB         10.1.62.227     445    DC01             [+] DRY.MARTINI.BARS\ATHENA_
 
 *Password spray: athena.t0 reuses the ATHENA_SVC password and comes back Pwn3d!*
 
-The first four attempts drop on NETBIOS connection timeouts rather than returning a logon result, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` were never actually tested against this password. The two that do complete both authenticate. `ATHENA_SVC` we already had. `athena.t0` is new, and NetExec tags it `(Pwn3d!)`. That flag means the account has administrative access on the target, and the target here is the domain controller. The reuse we suspected is real: the password cracked off a service account also logs in as the `athena.t0` tier 0 admin, and that account owns the DC.
+The first four attempts drop on NETBIOS connection timeouts rather than returning a logon result, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` were never actually tested against this password. The two that do complete both authenticate. `ATHENA_SVC` we already had. `athena.t0` is new, and NetExec tags it `(Pwn3d!)`. That flag means the account has administrative access on the target, and the target here is the domain controller. The reuse we suspected is real: the password cracked off a service account also logs in as the `athena.t0` tier 0 admin.
 
 ## NTDS Dump
 
-The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. We never touch the file directly. Instead NetExec asks the DC to replicate the one account we want, using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain. The NetExec wiki documents the process [here](https://www.netexec.wiki/smb-protocol/obtaining-credentials/dump-ntds.dit).
+The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. We never touch the file directly. Instead NetExec asks the DC to replicate the one account we want, using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain.
 
 ```
 nxc smb 10.1.62.227 -u 'athena.t0' -p '1dirtymartini' --ntds --user krbtgt
@@ -359,8 +359,8 @@ We recover the `krbtgt` NT hash `22ebc290e67668629c8d0812662a9c51`, submit it as
 
 ## Final Thoughts
 
-MartiniAD is a clean and straightforward Active Directory lab that reinforces the fundamentals. The chain is short but it covers essential AD methodology: anonymous enumeration, credential discovery, Kerberoasting, password spraying, and NTDS extraction. Every step flows naturally into the next. The one wrinkle was BloodHound collection dying on the LDAPS handshake, so I worked the whole chain without a graph to lean on. That turned out to be a useful reminder that the collector is a convenience and not a requirement, and that a username list plus one valid credential still goes a long way.
+MartiniAD goes from an anonymous SMB session to the krbtgt hash without a single exploit in the chain. Anonymous enumeration, credential discovery, Kerberoasting, password spraying, and NTDS extraction, and every step flows naturally into the next. The one wrinkle was BloodHound collection dying on the LDAPS handshake, so I worked the whole chain without a graph to lean on. That turned out to be a useful reminder that the collector is a convenience and not a requirement, and that a username list plus one valid credential still goes a long way.
 
-The biggest takeaway is password reuse. The `ATHENA_SVC` service account and the `athena.t0` admin account shared the same password, which turned a standard Kerberoast into full domain compromise. In a real environment this is exactly the kind of finding that lands a critical on a report. Service accounts should have long, random passwords managed through gMSA or a PAM solution so a roasted ticket produces nothing crackable, and tier 0 admin accounts should never share a credential with anything else in the domain. The plaintext credential sitting in a file on an anonymously accessible share is the other half of the story, and that one is not specific to domain controllers: guest and anonymous SMB access should be off across the estate, and any share reachable without valid credentials needs reviewing for this kind of leftover. Finding it on a DC only raises the stakes, since a domain controller should not be handing files to a guest session at all.
+The biggest takeaway is password reuse. The `ATHENA_SVC` service account and the `athena.t0` admin account shared the same password, which turned a standard Kerberoast into full domain compromise. In a real environment that pairing lands a critical on a report. Service accounts should have long, random passwords managed through gMSA or a PAM solution so a roasted ticket produces nothing crackable, and tier 0 admin accounts should never share a credential with anything else in the domain. The plaintext credential sitting in a file on an anonymously accessible share is the other half of the story, and that one is not specific to domain controllers: guest and anonymous SMB access should be off everywhere, and any share reachable without valid credentials needs reviewing for this kind of leftover. Finding it on a DC only raises the stakes, since a domain controller should not be handing files to a guest session at all.
 
 — 0xB1rd

