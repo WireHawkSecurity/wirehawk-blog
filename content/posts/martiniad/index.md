@@ -31,7 +31,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## RustScan
 
-We use RustScan for initial port discovery. RustScan finds the open ports quickly and hands them off to Nmap for service detection and script scanning.
+We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies the services and pulls their details.
 
 ```
 rustscan -a 10.1.62.227 -- -sC -sV
@@ -90,7 +90,7 @@ Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LD
 
 ## SMB Enumeration
 
-With no credentials in hand, SMB is the first place to look. We check whether anonymous authentication is accepted and enumerate shares with NetExec.
+With no credentials, we check whether anonymous authentication is accepted and enumerate shares with NetExec.
 
 ```
 nxc smb 10.1.62.227 -u 'anonymous' -p '' --shares
@@ -114,9 +114,9 @@ SMB         10.1.62.227     445    DC01             SYSVOL                      
 
 *Anonymous authentication mapping to Guest with READ and WRITE on the notes share*
 
-The anonymous logon is accepted and mapped to the `Guest` account. That gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`, which is the named pipe share that user and group enumeration runs over. READ and WRITE on a non-standard share is the lead worth following first.
+The anonymous logon is accepted and mapped to the `Guest` account, which gets us READ and WRITE on a non-standard `notes` share plus READ on `IPC$`. A non-standard share is the lead worth following first.
 
-## Smbclient
+## Access as mprice
 
 We connect to the `notes` share with the same anonymous credentials.
 
@@ -160,8 +160,6 @@ mprice:*martini*
 
 A personal to-do list, and the last two lines hand us a credential: `mprice:*martini*`.
 
-## Access as mprice
-
 ```
 nxc smb 10.1.62.227 -u 'mprice' -p '*martini*' --shares
 ```
@@ -184,9 +182,11 @@ SMB         10.1.62.227     445    DC01             SYSVOL          READ        
 
 *Validating mprice credentials with NetExec*
 
-Credentials confirmed. `mprice` adds READ on `NETLOGON` and `SYSVOL`, both standard logon shares, and no share appears that anonymous access had not already shown us. Let's collect BloodHound data and see what the domain looks like. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
+Credentials confirmed. `mprice` adds READ on `NETLOGON` and `SYSVOL`, and no new share turns up.
 
 ## BloodHound Enumeration
+
+BloodHound would map the domain for us, but the collection does not survive the LDAPS handshake. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --bloodhound --collection All --dns-server 10.1.62.227
@@ -203,11 +203,11 @@ LDAP        10.1.62.227     389    DC01             [-] BloodHound collection fa
 
 *NetExec resolving the collection methods and then failing on the LDAPS handshake*
 
-Authentication succeeds and the collector resolves every collection method, then dies wrapping the socket in TLS. NetExec's own banner is the first clue: `channel binding:No TLS cert` is what it reports when it could not retrieve a TLS certificate from the domain controller, and 636 and 3269 both come back as `tcpwrapped` in our scan. Between the two, LDAPS is listening but never gives the collector the secure channel it wants. BloodHound would have mapped the paths for us, but it is a convenience here, not a requirement. Kerberoasting needs nothing more than a valid domain credential, which we already have, so we go straight at it.
+Authentication succeeds and every collection method resolves, then the run dies wrapping the socket in TLS. NetExec reports `channel binding:No TLS cert`, which is what it says when it cannot retrieve a TLS certificate from the domain controller. Kerberoasting needs nothing more than a valid domain credential, so we go straight at it.
 
-## Kerberoasting
+## Access as ATHENA_SVC
 
-Kerberoasting targets accounts that have a Service Principal Name set. Any authenticated domain user can request a Kerberos service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that encrypted portion offline, so the account we are attacking never sees a login attempt. The only requirement is a single valid credential, which we now have.
+Kerberoasting targets accounts with a Service Principal Name set. Any authenticated domain user can request a service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that portion offline, so the account never sees a login attempt.
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --kerberoasting output.txt --dns-server 10.1.62.227
@@ -226,7 +226,7 @@ LDAP        10.1.62.227     389    DC01             $krb5tgs$23$*ATHENA_SVC$DRY.
 
 *Kerberoasting: ATHENA_SVC TGS hash captured via NetExec*
 
-One roastable account comes back. `ATHENA_SVC` has an SPN set and sits in both `Remote Management Users` and `Remote Desktop Users`, so the account is provisioned to log in remotely over WinRM and RDP rather than just run a service. NetExec writes the hash to `output.txt` and we crack it with john.
+One roastable account comes back. NetExec writes the hash to `output.txt` and we crack it with john.
 
 ```
 john output.txt --wordlist=/usr/share/wordlists/rockyou.txt
@@ -248,8 +248,6 @@ Session completed.
 *john recovering the ATHENA_SVC password from the TGS-REP hash*
 
 Cracked in seconds. We have `ATHENA_SVC:1dirtymartini`.
-
-## Access as ATHENA_SVC
 
 ```
 nxc smb 10.1.62.227 -u 'ATHENA_SVC' -p '1dirtymartini' --shares
@@ -273,11 +271,11 @@ SMB         10.1.62.227     445    DC01             SYSVOL          READ        
 
 *Validating ATHENA_SVC credentials with NetExec*
 
-Credentials confirmed, and the share list matches what `mprice` had. What we do have is READ on `IPC$` and a service account password, which is enough to start looking at the rest of the domain.
+Credentials confirmed, and the share list matches `mprice`'s.
 
-## Password Spraying
+## Access as athena.t0
 
-We pull the domain user list with NetExec so we have a set of targets.
+We pull the domain user list over SMB to build a target list.
 
 ```
 nxc smb 10.1.62.227 -u 'ATHENA_SVC' -p '1dirtymartini' --users
@@ -300,7 +298,7 @@ SMB         10.1.62.227     445    DC01             [*] Enumerated 6 local users
 
 *NetExec pulling the six domain accounts, including both athena.t0 and ATHENA_SVC*
 
-Six accounts, and two of them are built on the same name: `ATHENA_SVC` and `athena.t0`. The `.t0` suffix is common shorthand for a tier 0 account, meaning an admin account scoped to domain controllers and identity infrastructure. When a service account and a tier 0 admin account share a base name, password reuse between them is worth testing before anything else. We save the usernames to a `users.txt` file.
+Six accounts, and two of them are built on the same name: `ATHENA_SVC` and `athena.t0`. The `.t0` suffix is common shorthand for a tier 0 account, meaning an admin account scoped to domain controllers and identity infrastructure. That pairing makes a password spray with the service account password worth running first. We save the usernames to a `users.txt` file.
 
 ```
 Administrator
@@ -311,7 +309,7 @@ athena.t0
 ATHENA_SVC
 ```
 
-We have two passwords to work with, `1dirtymartini` and `*martini*`. We start with `1dirtymartini`, the one we just pulled off `ATHENA_SVC`.
+We start with `1dirtymartini`, the one we just pulled off `ATHENA_SVC`.
 
 ```
 nxc smb 10.1.62.227 -u users.txt -p '1dirtymartini' --continue-on-success --dns-server 10.1.62.227
@@ -331,11 +329,11 @@ SMB         10.1.62.227     445    DC01             [+] DRY.MARTINI.BARS\ATHENA_
 
 *Password spray: athena.t0 reuses the ATHENA_SVC password and comes back Pwn3d!*
 
-The first four attempts drop on NETBIOS connection timeouts rather than returning a logon result, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` were never actually tested against this password. The two that do complete both authenticate. `ATHENA_SVC` we already had. `athena.t0` is new, and NetExec tags it `(Pwn3d!)`. That flag means the account has administrative access on the target, and the target here is the domain controller. The reuse we suspected is real: the password cracked off a service account also logs in as the `athena.t0` tier 0 admin.
+The first four attempts drop on NETBIOS connection timeouts, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` never get tested against this password. `athena.t0` authenticates and NetExec tags it `(Pwn3d!)`. That flag means administrative access on the target, and the target here is the domain controller.
 
 ## NTDS Dump
 
-The goal for this lab is the `krbtgt` NT hash. `krbtgt` is the account whose key encrypts every TGT the domain issues, so recovering its hash means we can forge a ticket for any user we want. NTDS.dit is the Active Directory database on the domain controller, and it holds the password hashes for every account in the domain. We never touch the file directly. Instead NetExec asks the DC to replicate the one account we want, using the same protocol domain controllers use to sync with each other, which is why administrative rights on the DC are all we need. We scope the output to `krbtgt` rather than printing every account in the domain.
+`krbtgt`'s key encrypts every TGT the domain issues, so its hash lets us forge a ticket for any account. NetExec never touches NTDS.dit directly. It asks the DC to replicate the account we name, the same way domain controllers sync with each other, which is why administrative rights on the DC are all we need. `--user krbtgt` scopes what prints, not what gets read.
 
 ```
 nxc smb 10.1.62.227 -u 'athena.t0' -p '1dirtymartini' --ntds --user krbtgt
@@ -359,8 +357,8 @@ We recover the `krbtgt` NT hash `22ebc290e67668629c8d0812662a9c51`, submit it as
 
 ## Final Thoughts
 
-MartiniAD goes from an anonymous SMB session to the krbtgt hash without a single exploit in the chain. Anonymous enumeration, credential discovery, Kerberoasting, password spraying, and NTDS extraction, and every step flows naturally into the next. The one wrinkle was BloodHound collection dying on the LDAPS handshake, so I worked the whole chain without a graph to lean on. That turned out to be a useful reminder that the collector is a convenience and not a requirement, and that a username list plus one valid credential still goes a long way.
+MartiniAD goes from an anonymous SMB session to the krbtgt hash without a single exploit in the chain. The one wrinkle was BloodHound collection dying on the LDAPS handshake, so I worked the rest of it blind. A username list and one valid credential turned out to be enough.
 
-The biggest takeaway is password reuse. The `ATHENA_SVC` service account and the `athena.t0` admin account shared the same password, which turned a standard Kerberoast into full domain compromise. In a real environment that pairing lands a critical on a report. Service accounts should have long, random passwords managed through gMSA or a PAM solution so a roasted ticket produces nothing crackable, and tier 0 admin accounts should never share a credential with anything else in the domain. The plaintext credential sitting in a file on an anonymously accessible share is the other half of the story, and that one is not specific to domain controllers: guest and anonymous SMB access should be off everywhere, and any share reachable without valid credentials needs reviewing for this kind of leftover. Finding it on a DC only raises the stakes, since a domain controller should not be handing files to a guest session at all.
+Password reuse is what turns this from a Kerberoast into a domain compromise. ATHENA_SVC and athena.t0 shared a password, and in a real environment that pairing is a critical on its own. Service accounts with SPNs belong on gMSA or a PAM-managed password so a roasted ticket produces nothing crackable, and a tier 0 account should never share a credential with anything. The plaintext credential on an anonymously readable share is the other half: guest and anonymous SMB access should be off everywhere, not just on domain controllers.
 
 — 0xB1rd

