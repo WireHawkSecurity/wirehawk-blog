@@ -33,7 +33,7 @@ You have been authorized to perform an external penetration test against a targe
 
 ## Nmap
 
-We start with a full port scan to map the attack surface.
+We scan every port with `-p-`, pulling service versions with `-sV` and the default script set with `-sC`.
 
 ```
 nmap -p- --open -sC -sV -T4 10.1.69.115
@@ -74,7 +74,7 @@ SSH requires a key, so we set it aside and focus on the web application.
 
 ## HTTP (Port 80)
 
-We open Burp Suite and navigate to `http://10.1.69.115`. The application presents a login page for the Hack Smarter Portal.
+We proxy through Burp Suite so every request the application makes is captured for later review, then navigate to `http://10.1.69.115`. The application presents a login page for the Hack Smarter Portal.
 
 ![Verbose web application](images/web-app-login.png)
 
@@ -147,7 +147,7 @@ We upload the modified image and preview it. Our input comes back on the page un
 
 *Reflected input: 0xB1rd rendered in the Copyright / Artist metadata field*
 
-Reflected input into a Flask page means the templating engine is almost certainly Jinja2, which makes Server-Side Template Injection the path worth testing. In an SSTI the application drops our input into the template before rendering it, so instead of being printed as text it gets evaluated as template code. Cross-Site Scripting would not move us forward here since we already hold admin on the application, and what we want is the server. We start with a basic arithmetic test.
+Reflected input into a Flask page means the templating engine is almost certainly Jinja2, which makes [Server-Side Template Injection](https://book.hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/index.html) the path worth testing. In an SSTI the application drops our input into the template before rendering it, so instead of being printed as text it gets evaluated as template code. Cross-Site Scripting would not move us forward here since we already hold admin on the application, and what we want is the server. We start with a basic arithmetic test.
 
 ```
 exiftool -Artist="{{7*7}}" image.png
@@ -199,6 +199,6 @@ We confirm with `id` that we are root and grab the final flag from `/root/root.t
 
 Image metadata as an SSTI entry point was new to me. I got there by noticing the `Copyright / Artist` field came back rendered instead of escaped, which is easy to walk past when you are looking at an upload feature for file type tricks instead. The MFA bypass was the other one I did not see coming, since the code turned up in an endpoint I had already read once and moved on from.
 
-The `/api/users/all` endpoint is the root of all of it. API endpoints need role-based authorization, and none of them should be returning stored passwords or a live MFA code. Input reaching a template engine has to be escaped, and image metadata counts as input. The application also ran as root, so template injection went straight to the host with no escalation step, which a least-privilege service account would have kept to a low-privilege foothold.
+The `/api/users/all` endpoint is the root of all of it. API endpoints need role-based authorization, and none of them should be returning stored passwords or a live MFA code. Input reaching a template engine has to be escaped, and image metadata counts as input. The application also ran as root, so template injection went straight to the host with no escalation step. A least-privilege service account would have kept that to a foothold.
 
 — 0xB1rd

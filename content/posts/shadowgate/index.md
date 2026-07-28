@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising ShadowGate, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with no credentials and only VPN access to the internal network. The domain controller accepts an anonymous SMB session and hands over the full user list, which sets up an AS-REP Roast against `jtrueblood`. BloodHound shows `jtrueblood` holds `GenericWrite` over `bbrown`, and a Targeted Kerberoast through that edge recovers `bbrown`'s password. Certipy enumeration as `bbrown` finds an ESC8 misconfiguration on the CA, so we coerce the domain controller with PetitPotam and relay its authentication to the web enrollment endpoint for a certificate as `DC01$`. That certificate gets us the machine account NT hash over PKINIT, and an NTDS dump extracts the `krbtgt` hash for full domain compromise.
+In this walkthrough, we will be compromising ShadowGate, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with no credentials and only VPN access to the internal network. The domain controller accepts an anonymous SMB session and hands over the full user list, setting up an AS-REP Roast against `jtrueblood`. BloodHound shows `jtrueblood` holds `GenericWrite` over `bbrown`, and a Targeted Kerberoast through that edge recovers `bbrown`'s password. Certipy enumeration as `bbrown` finds an ESC8 misconfiguration, so we coerce the domain controller with PetitPotam and relay its authentication to the web enrollment endpoint for a certificate as `DC01$`. That certificate gets us the machine account NT hash over PKINIT, and an NTDS dump extracts the `krbtgt` hash for full domain compromise.
 
 ![ShadowGate machine card](images/machine-card.png)
 
@@ -57,7 +57,7 @@ The machine details tab provides the open ports, so we skip port scanning for no
 9389/tcp  open  mc-nmf        .NET Message Framing
 ```
 
-Standard domain controller ports across the board. DNS on 53, HTTP on 80, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. With no credentials, anonymous SMB is where we start.
+Standard domain controller ports across the board. DNS on 53, HTTP on 80, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. With no credentials we start where the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) does, at anonymous and guest access.
 
 ## SMB Enumeration
 
@@ -126,7 +126,7 @@ LDAP        10.0.30.253    389    DC01             $krb5asrep$23$jtrueblood@SHAD
 
 *AS-REP Roast: jtrueblood hash captured via NetExec*
 
-One hash comes back. The two `KDC_ERR_CLIENT_REVOKED` lines are disabled accounts, not failed roasts. We save the hash to `jtrueblood_hash.txt` and crack it with Hashcat.
+One hash comes back. The two `KDC_ERR_CLIENT_REVOKED` lines are accounts the KDC refuses outright, not failed roasts. We save the hash to `jtrueblood_hash.txt` and crack it with Hashcat, which reads the mode off the hash prefix. `$krb5asrep$` is mode 18200.
 
 ```
 hashcat jtrueblood_hash.txt /usr/share/wordlists/rockyou.txt
@@ -175,7 +175,7 @@ Credentials confirmed. A `CertEnroll` share shows up, which tells us AD CS is de
 
 ## BloodHound Enumeration
 
-We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
+One valid credential is enough to read the directory, so we look at what `jtrueblood` can reach. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap 10.0.30.253 -u 'jtrueblood' -p 'blood_brothers' --bloodhound --collection All --dns-server 10.0.30.253
@@ -214,7 +214,7 @@ $krb5tgs$23$*bbrown$SHADOW.GATE$shadow.gate/bbrown*$16e9f43770ea4f6e3d1c9d37213c
 
 *Targeted Kerberoast: SPN set and TGS hash captured for bbrown*
 
-We save the hash to `bbrown_hash.txt` and crack it with Hashcat.
+We save the hash to `bbrown_hash.txt` and crack it with Hashcat. The `$krb5tgs$` prefix puts this one at mode 13100.
 
 ```
 hashcat bbrown_hash.txt /usr/share/wordlists/rockyou.txt
@@ -367,7 +367,7 @@ The `DomainController` template is enabled and published on `shadow-DC01-CA`, wi
 
 ## Access as DC01$
 
-ESC8 is an AD CS misconfiguration where the HTTP certificate enrollment endpoint accepts NTLM without channel binding. We coerce the DC into authenticating to us and relay that authentication straight through to the endpoint, which issues a certificate on the DC's behalf. It works on a combined DC/CA because the relay is cross-protocol, SMB to HTTP. The weakness is in how web enrollment handles authentication, not in any template.
+[ESC8](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation) is an AD CS misconfiguration where the HTTP certificate enrollment endpoint accepts NTLM without channel binding. We coerce the DC into authenticating to us and relay that authentication straight through to the endpoint, which issues a certificate on the DC's behalf. It works on a combined DC/CA because the relay is cross-protocol, SMB to HTTP. The weakness is in how web enrollment handles authentication, not in any template.
 
 The relayed identity is `DC01$`, so we need a template Domain Controllers can enroll in. `DomainController` fits: client authentication EKU, no manager approval, no authorized signatures.
 

@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising Welcome, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with phishing-obtained credentials for `e.hills`, which we use to enumerate an SMB share containing password-protected HR documents on the domain controller. Cracking the PDF with john reveals a default account password, and a password spray lands a hit on `a.harris`. BloodHound reveals `a.harris` inherits `GenericAll` over `i.park` through the `HR` group, and a Force Password Change chains through `i.park`'s `ForceChangePassword` privilege over the `svc_ca` service account. `svc_ca` holds enrollment rights on a custom certificate template, and Certipy identifies an ESC1 misconfiguration on it that allows the requester to supply an arbitrary subject. We request a certificate as Administrator, authenticate via PKINIT to recover the NT hash, and log in to the domain controller for full domain compromise.
+In this walkthrough, we will be compromising Welcome, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement begins with phishing-obtained credentials for `e.hills`, which we use to enumerate an SMB share containing password-protected HR documents on the domain controller. Cracking the PDF with john reveals a default account password, and a password spray lands a hit on `a.harris`. BloodHound reveals `a.harris` inherits `GenericAll` over `i.park` through the `HR` group, and a Force Password Change chains through `i.park`'s `ForceChangePassword` over the `svc_ca` service account. `svc_ca` holds enrollment rights on a template Certipy flags as ESC1, so we request a certificate as Administrator, recover the NT hash, and log in to the domain controller for full domain compromise.
 
 ![Welcome machine card](images/machine-card.png)
 
@@ -35,7 +35,7 @@ e.hills:Il0vemyj0b2025!
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies the services and pulls their details.
+We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.1.92.228 -- -sC -sV
@@ -133,7 +133,7 @@ Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LD
 
 ## SMB Enumeration
 
-With our phishing credentials for `e.hills`, we check what SMB shares are available.
+One low-privilege credential puts us on the authenticated branch of the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/), and shares are the fastest place to find something a user left behind. We check what `e.hills` can reach.
 
 ```
 nxc smb WELCOME.local -u 'e.hills' -p 'Il0vemyj0b2025!' --shares
@@ -195,7 +195,7 @@ getting file \Welcome Start Guide.pdf of size 89511 as Welcome Start Guide.pdf (
 
 *Smbclient connected to the Human Resources share with five PDFs downloaded*
 
-Five onboarding and HR documents. `Welcome Start Guide.pdf` is the one most likely to hold something useful for a new employee, and it turns out to be password-protected.
+Five onboarding and HR documents. `Welcome Start Guide.pdf` looks most likely to help a new employee, and it is password-protected.
 
 ![PDF password protected](images/pdf-protected.png)
 
@@ -272,7 +272,7 @@ One hit. `a.harris` is still using the default password, which gives us two vali
 
 ## BloodHound Enumeration
 
-We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
+Two accounts is enough to start mapping, since BloodHound reads the directory as any authenticated user. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@' --bloodhound --collection All --dns-server 10.1.92.228
@@ -511,7 +511,7 @@ Certipy flags ESC1 on the `Welcome-Template`. The CA is `WELCOME-CA`, the templa
 
 ## Access as Administrator
 
-ESC1 is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
+[ESC1](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation) is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
 
 We request a certificate as `Administrator`, taking the SID off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
 
@@ -552,7 +552,7 @@ Certipy gets that hash by requesting a Kerberos ticket to itself and reading the
 
 ## Shell as Administrator (root.txt)
 
-Both RDP and WinRM are available on the DC. We connect with Evil-WinRM using the hash, since NTLM authenticates with the hash itself and there is nothing left to crack.
+We connect with Evil-WinRM using the hash. NTLM authenticates with the hash itself, so there is nothing left to crack.
 
 ```
 evil-winrm -i '10.1.92.228' -u 'Administrator' -H '0cf1b799460a39c852068b7c0574677a'
@@ -572,6 +572,6 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 The dead end was the useful part of this one. I burned a Targeted Kerberoast on `i.park` and got a hash `rockyou.txt` could not touch, then realised the same edge that let me set the SPN also let me reset the password outright. Reading the edge properly first would have saved the step.
 
-An HR share on the domain controller handing onboarding documents to any domain user is the cheapest finding here to fix, and the default password inside one of them is why it mattered. `GenericAll` and `ForceChangePassword` need auditing on a schedule, since both of those hops were delegated permissions nobody revisited. On the CA, any template with `Enrollee Supplies Subject` enabled lets one account's enrollment rights become a certificate for any account in the domain, and that one should be locked down or removed unless there is a clear operational need for it.
+An HR share on the domain controller handing onboarding documents to any domain user is the cheapest finding here to fix, and the default password inside one of them is why it mattered. `GenericAll` and `ForceChangePassword` were delegated permissions nobody revisited, and object-level rights like these need auditing on a schedule rather than at build time. A template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain.
 
 — 0xB1rd

