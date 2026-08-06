@@ -31,7 +31,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
+We start with [RustScan](https://github.com/bee-san/RustScan) to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.1.62.227 -- -sC -sV
@@ -207,7 +207,7 @@ Authentication succeeds and every collection method resolves, then the run dies 
 
 ## Access as ATHENA_SVC
 
-Kerberoasting targets accounts with a Service Principal Name set. Any authenticated domain user can request a service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that portion offline, so the account never sees a login attempt.
+Kerberoasting targets accounts with a Service Principal Name set. Any authenticated domain user can request a service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that portion offline.
 
 ```
 nxc ldap 10.1.62.227 -u 'mprice' -p '*martini*' --kerberoasting output.txt --dns-server 10.1.62.227
@@ -275,7 +275,7 @@ Credentials confirmed, and the share list matches `mprice`'s.
 
 ## Access as athena.t0
 
-We use [NetExec's SMB enumeration](https://www.netexec.wiki/smb-protocol/enumeration) to pull the domain user list and build a target list.
+We pull the domain user list with NetExec to build a target list.
 
 ```
 nxc smb 10.1.62.227 -u 'ATHENA_SVC' -p '1dirtymartini' --users

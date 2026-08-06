@@ -37,7 +37,7 @@ faraday:hacksmarter123
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
+We start with [RustScan](https://github.com/bee-san/RustScan) to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.0.21.50 -- -sC -sV
@@ -202,7 +202,7 @@ Fifteen domain users, saved to a `users.txt` file. `Soulkiller.svc` carries a de
 
 ## Access as alt.svc
 
-Kerberoasting targets accounts with a Service Principal Name set. Any authenticated domain user can request a service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that portion offline, so the account never sees a login attempt.
+Kerberoasting targets accounts with a Service Principal Name set. Any authenticated domain user can request a service ticket for an SPN, and part of that ticket is encrypted with a key derived from the service account's password. We request the ticket and crack that portion offline.
 
 ```
 nxc ldap hacksmarter.local -u 'faraday' -p 'hacksmarter123' --kerberoasting output.txt
@@ -284,7 +284,7 @@ We import the data and mark `faraday` and `alt.svc` as owned. Outbound object co
 
 ## Access as Yorinobu
 
-`GenericAll` opens more than one path. We start with a Targeted Kerberoast, which uses write access over the target to set an SPN where there is none. targetedKerberoast.py sets it, requests the TGS, and removes it after.
+`GenericAll` opens more than one path. We start with a Targeted Kerberoast, which uses write access over the target to set an SPN where there is none. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets it, requests the TGS, and removes it after.
 
 ```
 python3 targetedKerberoast.py -v -d 'hacksmarter.local' -u 'alt.svc' -p 'babygirl1'
