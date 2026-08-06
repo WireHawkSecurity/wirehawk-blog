@@ -35,7 +35,7 @@ e.hills:Il0vemyj0b2025!
 
 ## RustScan
 
-We start with RustScan to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
+We start with [RustScan](https://github.com/bee-san/RustScan) to find the open ports quickly. It hands them straight to Nmap, which identifies service versions with `-sV` and runs the default script set with `-sC` to pull banners, certificates, and other details.
 
 ```
 rustscan -a 10.1.92.228 -- -sC -sV
@@ -308,7 +308,7 @@ We have a shell on the DC and grab `user.txt` from the desktop of `a.harris`.
 
 ## Access as i.park
 
-BloodHound suggests two abuse paths off the `GenericAll` edge. We try the Targeted Kerberoast first. Setting a Service Principal Name on an account makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. targetedKerberoast.py sets the SPN, requests the TGS, and cleans it up after.
+BloodHound suggests two abuse paths off the `GenericAll` edge. We try the Targeted Kerberoast first. Setting a Service Principal Name on an account makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and cleans it up after.
 
 ```
 ./targetedKerberoast.py -d WELCOME.local --dc-ip 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@'

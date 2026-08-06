@@ -195,7 +195,7 @@ We import the data and review outbound object control for `jtrueblood`. The acco
 
 ## Access as bbrown
 
-`GenericWrite` does not allow a password reset, but it does let us write attributes, including a Service Principal Name. That is what a Targeted Kerberoast needs. targetedKerberoast.py sets the SPN, requests the TGS, and removes the SPN after.
+`GenericWrite` does not allow a password reset, but it does let us write attributes, including a Service Principal Name. That is what a Targeted Kerberoast needs. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and removes the SPN after.
 
 ```
 ./targetedKerberoast.py -v -d 'shadow.gate' -u 'jtrueblood' -p 'blood_brothers'
