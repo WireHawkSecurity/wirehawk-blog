@@ -251,7 +251,7 @@ Secure Storage: Files are stored in encrypted format with access logging
 
 *Dev upload portal describing automatic transfer to the dev$ share and review by mitch.r*
 
-Uploaded files land on the `dev$` share and are reviewed by `mitch.r`, so a file that forces an SMB authentication back to us should capture that account's hash. The employee names would give us a username list, but we have no passwords to go with them. Before building that list and spraying, we test the login panel for other vulnerabilities. SQL injection is the first thing to try, injecting `admin' --` into the username field to comment out the password check.
+Uploaded files land on the `dev$` share and are reviewed by `mitch.r`, so a file that forces an SMB authentication back to us should capture that account's hash. But reaching that upload means getting past the portal login first. The employee names would give us a username list, but we have no passwords to go with them. Before building that list and spraying, we test the login panel. Default credentials like `admin:admin`, `admin:password`, and `administrator:administrator` get nowhere, so we move to SQL injection, injecting `admin' --` into the username field to comment out the password check.
 
 ```
 admin' --
