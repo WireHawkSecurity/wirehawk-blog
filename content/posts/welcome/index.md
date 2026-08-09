@@ -308,7 +308,7 @@ We have a shell on the DC and grab `user.txt` from the desktop of `a.harris`.
 
 ## Access as i.park
 
-BloodHound suggests two abuse paths off the `GenericAll` edge. We try the Targeted Kerberoast first. Setting a Service Principal Name on an account makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and cleans it up after.
+BloodHound suggests two abuse paths off the `GenericAll` edge, and we try the Targeted Kerberoast first. Setting a Service Principal Name on an account we can write to makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and removes the SPN after.
 
 ```
 ./targetedKerberoast.py -d WELCOME.local --dc-ip 10.1.92.228 -u 'a.harris' -p 'Welcome2025!@'

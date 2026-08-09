@@ -1,7 +1,7 @@
 ---
 title: "BugForge 🔨 | Free Web App Pentesting Labs"
 date: 2026-06-28
-summary: "A completely free platform for practicing web application penetration testing with daily and weekly labs, built by Alex Wren."
+summary: "A completely free platform for practicing web application penetration testing with daily and weekly labs, built by Alex Olsen."
 tags: ["Web Application", "Resources"]
 cover:
   image: "images/bugforge-cover.png"
@@ -11,7 +11,7 @@ cover:
 
 There are plenty of web application pentesting lab platforms out there, but most of them gate the good content behind a subscription or limit what you can access on a free tier. [BugForge](https://app.bugforge.io/) is completely free, and the labs have a realistic feel and scale well with difficulty.
 
-I first came across [Alex Wren](https://www.linkedin.com/in/alex-olsen-ase/) when I took the Practical Web Pentest Associate (PWPA) training and certification from [TCM Security](https://tcm-sec.com/), where he was the course instructor. When he launched BugForge, I gave it a shot and it stuck.
+I first came across [Alex Olsen](https://www.linkedin.com/in/alex-olsen-ase/) when I took the Practical Web Pentest Associate (PWPA) training and certification from [TCM Security](https://tcm-sec.com/), where he was the course instructor. When he launched BugForge, I gave it a shot and it stuck.
 
 ![BugForge platform](images/bugforge-cover.png)
 

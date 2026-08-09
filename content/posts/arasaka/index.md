@@ -284,7 +284,7 @@ We import the data and mark `faraday` and `alt.svc` as owned. Outbound object co
 
 ## Access as Yorinobu
 
-`GenericAll` opens more than one path. We start with a Targeted Kerberoast, which uses write access over the target to set an SPN where there is none. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets it, requests the TGS, and removes it after.
+`GenericAll` opens more than one path, and we start with a Targeted Kerberoast: it plants a Service Principal Name on an account we can write to and roasts it the same way. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and removes the SPN after.
 
 ```
 python3 targetedKerberoast.py -v -d 'hacksmarter.local' -u 'alt.svc' -p 'babygirl1'

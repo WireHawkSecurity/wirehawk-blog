@@ -21,7 +21,7 @@ Let's get started.
 
 ## Objective
 
-**ShadowGate** recently completed a corporate acquisition that significantly expanded its internal network, user base, and application footprint. Several business-critical systems were migrated and consolidated under tight operational deadlines to minimize downtime and maintain service continuity.
+ShadowGate recently completed a corporate acquisition that significantly expanded its internal network, user base, and application footprint. Several business-critical systems were migrated and consolidated under tight operational deadlines to minimize downtime and maintain service continuity.
 
 While functional validation was completed, the organization deferred a comprehensive security assessment due to delivery pressure and staffing constraints. Leadership has since requested an independent penetration test to validate the security posture of the newly created environment and identify any material risk before the next audit cycle.
 
@@ -195,7 +195,7 @@ We import the data and review outbound object control for `jtrueblood`. The acco
 
 ## Access as bbrown
 
-`GenericWrite` does not allow a password reset, but it does let us write attributes, including a Service Principal Name. That is what a Targeted Kerberoast needs. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and removes the SPN after.
+`GenericWrite` does not allow a password reset, but it does let us write attributes, which is all a Targeted Kerberoast requires. Setting a Service Principal Name on an account we can write to makes it roastable: any authenticated user can then request a service ticket for it, and part of that ticket is encrypted with a key derived from the account's password, so we crack it offline. [targetedKerberoast.py](https://github.com/ShutdownRepo/targetedKerberoast) sets the SPN, requests the TGS, and removes the SPN after.
 
 ```
 ./targetedKerberoast.py -v -d 'shadow.gate' -u 'jtrueblood' -p 'blood_brothers'

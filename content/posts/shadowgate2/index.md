@@ -191,7 +191,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: SG-DC01; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, SMB on 445, the global catalog on 3268/3269, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. Add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. Add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
 
 ## HTTP (Port 80)
 
@@ -251,7 +251,7 @@ Secure Storage: Files are stored in encrypted format with access logging
 
 *Dev upload portal describing automatic transfer to the dev$ share and review by mitch.r*
 
-Uploaded files land on the `dev$` share and are reviewed by `mitch.r`, so a file that forces an SMB authentication back to us should capture that account's hash. But reaching that upload means getting past the portal login first. The employee names would give us a username list, but we have no passwords to go with them. Before building that list and spraying, we test the login panel. Default credentials like `admin:admin`, `admin:password`, and `administrator:administrator` get nowhere, so we move to SQL injection, injecting `admin' --` into the username field to comment out the password check.
+Uploaded files land on the `dev$` share and are reviewed by `mitch.r`, so a file that forces an SMB authentication back to us should capture that account's hash. The employee names would give us a username list, but we have no passwords to go with them. Before building that list and spraying, we test the login panel for other vulnerabilities. SQL injection is the first thing to try, injecting `admin' --` into the username field to comment out the password check.
 
 ```
 admin' --
@@ -259,7 +259,7 @@ admin' --
 
 ![SQL injection in the login form](images/sqli-login.png)
 
-*Injecting admin' -- into the portal username field*
+*Injecting `admin' --` into the portal username field*
 
 The check is bypassed and we land in the portal.
 
@@ -958,7 +958,7 @@ Certipy v5.1.0 - by Oliver Lyak (ly4k)
 
 *Certipy enrolling a certificate on behalf of Administrator with the agent certificate*
 
-We authenticate with the Administrator certificate to recover the NT hash.
+We authenticate with the Administrator certificate over PKINIT, the Kerberos extension that lets a certificate stand in for a password, and recover the NT hash.
 
 ```
 certipy-ad auth -pfx 'administrator.pfx' -dc-ip '10.1.24.100' -ldap-scheme ldap
