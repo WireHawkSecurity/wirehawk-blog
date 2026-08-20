@@ -235,6 +235,6 @@ We are root. The final flag is in `/root`.
 
 Dark was a quick box for me. A single unauthenticated request handed over WordPress admin access, so I spent more time enumerating than exploiting. What stuck with me is how short the chain was, with a single group membership standing between a limited shell and full root.
 
-The Modular Connector plugin was several versions behind and carried a patched critical. Plugins and themes need a regular patch cadence, and anything unused should be removed rather than left installed. The other half was `www-data` sitting in the `docker` group. A web service account in that group is root on the host, so it should never include the account a public-facing service runs as.
+The Modular Connector plugin was out of date, and the flaw we used already had a fix available. Plugins and themes need a regular patch cadence, and anything unused should be removed rather than left installed. The other half was `www-data` sitting in the `docker` group. A web service account in that group is root on the host, so it should never include the account a public-facing service runs as.
 
 — 0xB1rd
