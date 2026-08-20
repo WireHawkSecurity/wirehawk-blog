@@ -139,7 +139,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: DC01; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner confirms the domain as `hacksmarter.local` and the hostname as `DC01.hacksmarter.local`. The SSL certificate issuer also reveals a CA named `hacksmarter-DC01-CA`. Add `hacksmarter.local` and `DC01.hacksmarter.local` to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner confirms the domain as `hacksmarter.local` and the hostname as `DC01.hacksmarter.local`. The SSL certificate issuer also reveals a CA named `hacksmarter-DC01-CA`. We add `hacksmarter.local` and `DC01.hacksmarter.local` to `/etc/hosts` before continuing.
 
 ## SMB Enumeration
 
@@ -166,7 +166,7 @@ SMB         10.0.21.50    445    DC01             SYSVOL          READ          
 
 *Validating faraday credentials with NetExec*
 
-Credentials are valid, with READ on `IPC$` and the two standard logon shares. `IPC$` is what lets us enumerate domain users.
+Credentials are valid, with READ on `IPC$` and the two standard logon shares. An authenticated session can enumerate domain users, so we pull the list.
 
 ```
 nxc smb hacksmarter.local -u 'faraday' -p 'hacksmarter123' --users
@@ -321,10 +321,6 @@ No luck. `Yorinobu`'s password is not in `rockyou.txt`, so we fall back to the o
 net rpc password "yorinobu" "0xB1rdWasHere1337" -U "hacksmarter.local"/"alt.svc"%"babygirl1" -S "10.0.21.50"
 ```
 
-![Force password change on Yorinobu](images/force-change-yorinobu.png)
-
-*Force Password Change on Yorinobu via net rpc (no output indicates success)*
-
 The command returns silently, which typically means success. We validate the new credentials with NetExec.
 
 ```
@@ -350,13 +346,15 @@ SMB         10.0.21.50    445    DC01             SYSVOL          READ          
 
 ## BloodHound Enumeration (Part 2)
 
-Reviewing `Yorinobu`'s outbound object control, the account holds `GenericWrite` over `Soulkiller.svc`. `GenericWrite` does not allow a password reset the way `GenericAll` does, but it does let us write attributes including an SPN, which is what a Targeted Kerberoast needs.
+Reviewing `Yorinobu`'s outbound object control, the account holds `GenericWrite` over `Soulkiller.svc`.
 
 ![BloodHound GenericWrite](images/bloodhound-genericwrite.png)
 
 *BloodHound GenericWrite: Yorinobu over Soulkiller.svc*
 
 ## Access as Soulkiller.svc
+
+`GenericWrite` does not allow a password reset the way `GenericAll` does, but it does let us write attributes including an SPN, which is what a Targeted Kerberoast needs.
 
 ```
 python3 targetedKerberoast.py -v -d 'hacksmarter.local' -u 'yorinobu' -p '0xB1rdWasHere1337'
@@ -664,6 +662,6 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 I did not expect the first PKINIT attempt to come back `KDC_ERR_KEY_EXPIRED`. A certificate that proves identity perfectly still gets nothing if the account behind it has an expired password, so I went back to the graph for a second Domain Administrator. Watching the same hash work over WinRM minutes later made the distinction stick.
 
-Two of these hops started with a cracked service account password. Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. `GenericAll` and `GenericWrite` each granted little alone. Object-level rights like these need auditing on a schedule rather than at build time. `AI_Takeover` is where that ended: a template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain. And a stale built-in Administrator bought nothing with a live Domain Admin beside it.
+Two hops started with a cracked service account password. Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. `GenericAll` and `GenericWrite` carried the middle of the chain, and object-level rights like these need auditing on a schedule rather than at build time. `AI_Takeover` ended it: a template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain. A stale built-in Administrator bought nothing with a live Domain Admin beside it, so Domain Admins needs paring back.
 
 — 0xB1rd

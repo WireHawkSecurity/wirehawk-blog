@@ -237,11 +237,11 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
 
-Cracked.
-
 ![john cracking the clerk.john ticket](images/john-clerk-john.png)
 
 *john recovering clerkhill from the clerk.john service ticket*
+
+Cracked. We validate `clerk.john:clerkhill` and enumerate shares.
 
 ```
 nxc smb 10.1.140.119 -u 'clerk.john' -p 'clerkhill' --shares
@@ -405,6 +405,8 @@ Session completed.
 ![john cracking the jon.peters hash](images/john-jon-peters.png)
 
 *john recovering 1234heresjonny from the jon.peters NTLMv2 hash*
+
+Cracked. We validate `jon.peters:1234heresjonny` and enumerate shares.
 
 ```
 nxc smb 10.1.140.119 -u 'jon.peters' -p '1234heresjonny' --shares
@@ -756,6 +758,8 @@ Unknown     : !Gemma4James!
 
 *The stored credential decrypting to emma.hayes and her plaintext password*
 
+That gives us `emma.hayes:!Gemma4James!`. We validate against SMB and enumerate shares.
+
 ```
 nxc smb 10.1.140.119 -u 'emma.hayes' -p '!Gemma4James!' --shares
 ```
@@ -783,11 +787,13 @@ Credentials are valid, with no new share access.
 
 ## Shell as sam.brooks (user.txt)
 
-`emma.hayes` carries a long list of outbound object control in BloodHound. `WriteDacl` over `sam.brooks` is the first piece worth taking, because `sam.brooks` sits in Remote Management Users and that is a session on the domain controller itself.
+`emma.hayes` carries a long list of outbound object control in BloodHound. `WriteDacl` over `sam.brooks` is the first piece worth taking.
 
 ![BloodHound WriteDacl from emma.hayes](images/bloodhound-writedacl.png)
 
 *BloodHound WriteDacl: emma.hayes over sam.brooks*
+
+`sam.brooks` sits in Remote Management Users, which makes it a session on the domain controller itself.
 
 ![BloodHound sam.brooks group membership](images/bloodhound-sam-brooks-groups.png)
 
@@ -810,7 +816,7 @@ Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 *dacledit writing FullControl for emma.hayes onto the sam.brooks object*
 
-`GenericAll` allows a password reset, so we force a change on `sam.brooks`.
+Full control includes the password reset primitive, so we force a change on `sam.brooks`.
 
 ```
 net rpc password 'sam.brooks' '0xB1rdWasHere1337!' -U 'city.local/emma.hayes%!Gemma4James!' -S 10.1.140.119
@@ -880,7 +886,7 @@ evil-winrm -i '10.1.140.119' -u 'sam.brooks' -p '0xB1rdWasHere1337!'
 
 ## Access as web_admin
 
-That leaves `web_admin`. `emma.hayes` holds `WriteDacl` over the `CITYOPS` OU and `GenericWrite` over both `web_admin` and the `QUARANTINE` OU it sits in.
+That leaves `web_admin`. Back on the same graph, `emma.hayes` holds `WriteDacl` over the `CITYOPS` OU and `GenericWrite` over both `web_admin` and the `QUARANTINE` OU it sits in.
 
 An object's place in the directory is its distinguished name, so moving `web_admin` into `CITYOPS` means rewriting that name. First we take full control of `CITYOPS`, with `-inheritance` so the rights carry down to the objects inside it.
 

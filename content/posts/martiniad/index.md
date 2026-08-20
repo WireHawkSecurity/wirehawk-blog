@@ -86,7 +86,7 @@ PORT      STATE SERVICE       REASON          VERSION
 51021/tcp open  msrpc         syn-ack ttl 126 Microsoft Windows RPC
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner gives us the domain as `DRY.MARTINI.BARS`, and the RDP certificate and NTLM info confirm the hostname as `DC01.DRY.MARTINI.BARS`. Add both to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner gives us the domain as `DRY.MARTINI.BARS`, and the RDP certificate and NTLM info confirm the hostname as `DC01.DRY.MARTINI.BARS`. We add both to `/etc/hosts` before continuing.
 
 ## SMB Enumeration
 

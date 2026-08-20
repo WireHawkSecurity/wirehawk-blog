@@ -37,7 +37,7 @@ The client has provided you with VPN access to their internal network, but no cr
 
 ## Open Ports
 
-The machine details tab provides the open ports, so we skip port scanning for now. The LDAP banner confirms the domain as `shadow.gate`. Add `shadow.gate` to `/etc/hosts` before continuing.
+The machine details tab provides the open ports, so we skip port scanning for now. The LDAP banner confirms the domain as `shadow.gate`. We add `shadow.gate` to `/etc/hosts` before continuing.
 
 ```
 53/tcp    open  domain        Simple DNS Plus
@@ -57,7 +57,7 @@ The machine details tab provides the open ports, so we skip port scanning for no
 9389/tcp  open  mc-nmf        .NET Message Framing
 ```
 
-Standard domain controller ports across the board. DNS on 53, HTTP on 80, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. With no credentials we start where the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) does, at anonymous and guest access.
+Standard domain controller ports across the board. DNS on 53, HTTP on 80, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985. With no credentials we start where the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) does, at anonymous and guest access.
 
 ## SMB Enumeration
 
@@ -478,6 +478,6 @@ The access denied line is expected. NetExec first tries remote registry for the 
 
 The relay was the part I had to slow down on. Pointing a coerced authentication back at the host it came from feels wrong until you look at which protocols are on each end, and Certipy's built-in relay handled it in one window instead of standing up impacket-ntlmrelayx alongside it. The rest of the chain moved fast, mostly because that first anonymous session removed any guessing about who to attack.
 
-Null sessions are the finding I would lead a report with, since a domain controller answering unauthenticated SAMR queries is what made everything downstream possible. Pre-authentication belongs on every account, and object-level rights like `GenericWrite` need auditing on a schedule rather than at build time. On the CA, HTTP enrollment should be off and HTTPS with channel binding required. SMB signing is not the control here, since the receiving end of this relay was never SMB.
+A domain controller answering unauthenticated SAMR queries is what made everything downstream possible, and guest and anonymous SMB access should be off everywhere, not just on domain controllers. Pre-authentication belongs on every account, and object-level rights like `GenericWrite` need auditing on a schedule rather than at build time. On the CA, HTTP enrollment should be off and HTTPS with channel binding required. SMB signing is not the control here, since the receiving end of this relay was never SMB.
 
 — 0xB1rd

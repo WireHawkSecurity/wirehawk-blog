@@ -144,7 +144,7 @@ DEV01
 
 *The AD_machines.txt file from the open Share, listing APPDEV01, WEBDEV01, and DEV01 as staged machines*
 
-The file lists machines being added to the domain, matching what the client said about adding new machines to the network. Three of them (`APPDEV01`, `WEBDEV01`, `DEV01`) have no DNS record yet, which reads as computer accounts staged ahead of the machines themselves. The guest session won't return the domain users through `--users`, since SAMR (Security Account Manager Remote) enumeration is typically closed to anonymous access, so we use `--rid-brute` instead. It walks the domain SID's RIDs (relative identifiers) one at a time and resolves each to a name, which the guest session can still do, and we filter the output down to user objects.
+The file lists machines being added to the domain, matching what the client said about adding new machines to the network. Three of them (`APPDEV01`, `WEBDEV01`, `DEV01`) have no DNS record yet, which reads as computer accounts staged ahead of the machines themselves. The guest session won't return the domain users through `--users`, since SAMR (Security Account Manager Remote) enumeration is typically restricted to authenticated users and `Guest` is not one, so we use `--rid-brute` instead. It walks the domain SID's RIDs (relative identifiers) one at a time and resolves each to a name, which the guest session can still do, and we filter the output down to user objects.
 
 ```
 nxc smb 10.0.30.204 -u 'a' -p '' --rid-brute | grep "(SidTypeUser)"
@@ -593,7 +593,7 @@ We browse to that directory.
 cd C:\Users\Administrator\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\
 ```
 
-`ConsoleHost_history.txt` is there, so we read it.
+We read `ConsoleHost_history.txt` from that directory.
 
 ```
 type ConsoleHost_history.txt
@@ -623,6 +623,6 @@ The history holds the `net user` command that created `ryan`, plaintext password
 
 Past starts with no credentials at all, and the guest session carried more than I expected: a full domain user list and a Kerberoast of every SPN, none of it requiring authentication. The account that slowed me down was `tyler`, which refuses NTLM outright, so every command against it had to run through Kerberos with a ccache.
 
-Guest and anonymous SMB access should be off everywhere, not just on domain controllers; it handed over the user list and the roast. The plaintext credential in the SYSVOL logon script is the other half, readable by every authenticated user. `tyler`'s `GenericAll` over the domain controller is the last piece, and object-level rights like these need auditing on a schedule rather than at build time. The roast itself only landed because one of the pre-staged computer accounts carried a weak, hand-set password, where a random machine password would have produced nothing crackable.
+Guest and anonymous SMB access should be off everywhere, not just on domain controllers; it handed over the user list and the roast. SYSVOL is readable by every authenticated user, so a logon script there should never carry a plaintext credential. `tyler`'s `GenericAll` over the domain controller is the last piece, and object-level rights like these need auditing on a schedule rather than at build time. The roast only landed because a pre-staged computer account carried a weak, hand-set password, where a random machine password would have produced nothing crackable.
 
 — 0xB1rd

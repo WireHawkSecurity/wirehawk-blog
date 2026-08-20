@@ -129,7 +129,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: DC01; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389/636, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner confirms the domain as `WELCOME.local` and the hostname as `DC01.WELCOME.local`. The SSL certificate issuer also reveals a CA named `WELCOME-CA`. Add `WELCOME.local` and `DC01.WELCOME.local` to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985. The LDAP banner confirms the domain as `WELCOME.local` and the hostname as `DC01.WELCOME.local`. The SSL certificate issuer also reveals a CA named `WELCOME-CA`. We add `WELCOME.local` and `DC01.WELCOME.local` to `/etc/hosts` before continuing.
 
 ## SMB Enumeration
 
@@ -346,10 +346,6 @@ Zero results. The password is not in `rockyou.txt`, so we fall back to the secon
 net rpc password "i.park" "0xB1rdWasHere1337" -U "WELCOME.local"/"a.harris"%"Welcome2025\!@" -S "10.1.92.228"
 ```
 
-![Force password change on i.park](images/force-change-ipark.png)
-
-*Force Password Change on i.park via net rpc (no output indicates success)*
-
 The command returns silently, which typically indicates success. We validate the new credentials with NetExec.
 
 ```
@@ -395,10 +391,6 @@ We reset `svc_ca`'s password the same way, authenticating as `i.park`.
 ```
 net rpc password "svc_ca" "0xB1rdWasHere1337" -U "WELCOME.local"/"i.park"%"0xB1rdWasHere1337" -S "10.1.92.228"
 ```
-
-![Force password change on svc_ca](images/force-change-svcca.png)
-
-*Force Password Change on svc_ca via net rpc*
 
 No output again. We confirm with NetExec.
 
@@ -572,6 +564,6 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 The dead end was the useful part of this one. I burned a Targeted Kerberoast on `i.park` and got a hash `rockyou.txt` could not touch, then realised the same edge that let me set the SPN also let me reset the password outright. Reading the edge properly first would have saved the step.
 
-An HR share on the domain controller handing onboarding documents to any domain user is the cheapest finding here to fix, and the default password inside one of them is why it mattered. `GenericAll` and `ForceChangePassword` were delegated permissions nobody revisited, and object-level rights like these need auditing on a schedule rather than at build time. A template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain.
+An HR share on the domain controller handed onboarding documents to a low-privilege user, and the default password documented inside one of them is what made the spray work. A documented default password needs a forced change at first logon. `GenericAll` and `ForceChangePassword` were delegated permissions nobody revisited, and object-level rights like these need auditing on a schedule rather than at build time. A template with `Enrollee Supplies Subject` enabled turns one account's enrollment rights into a certificate for any account in the domain.
 
 — 0xB1rd
