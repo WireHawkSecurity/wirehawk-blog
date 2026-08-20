@@ -198,7 +198,14 @@
   cursor: pointer;
 }
 
-.library-filter-option:focus-within {
+/* :focus-visible, not :focus-within. A mouse click leaves focus on the checkbox,
+   so :focus-within kept the ring on a row the reader had already finished with —
+   an unchecked option still outlined in red long after the pointer moved away.
+   :focus-visible only matches when the browser judges the focus should be shown,
+   which is keyboard navigation, so the ring survives where it is needed and
+   disappears after a click. :has() carries it up to the row, and font.css already
+   depends on :has() for image captions. */
+.library-filter-option:has(input:focus-visible) {
   background: rgba(var(--wh-red-rgb), 0.06);
   box-shadow: inset 0 0 0 1px rgba(var(--wh-red-rgb), 0.5);
 }
