@@ -405,6 +405,21 @@ a:hover {
     margin-bottom: 0.75rem;
   }
 
+  /* PaperMod sets `.page-header, .post-header { margin: 24px auto ... }` as a
+     shorthand. Every override in this file sets margin-bottom only, so that 24px
+     top margin has always survived. On a phone it stacks on the header band's
+     own bottom padding and .main's 24px, leaving 64px of dead space between the
+     menu and the first line of content. Desktop has the room; a phone does not. */
+  .main {
+    padding-top: 0.75rem;
+  }
+
+  .page-header,
+  .post-header,
+  .first-entry {
+    margin-top: 0;
+  }
+
   .page-header {
     margin-bottom: 1.75rem;
   }
