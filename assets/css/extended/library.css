@@ -50,55 +50,28 @@
   appearance: none;
 }
 
-/* Filter groups */
+/* ── Filter dropdowns ──
+   One control per facet, all on a single line at every width. Each trigger owns
+   a panel of native checkboxes: multi-select survives, and so does the keyboard
+   and screen-reader behaviour that comes free with a real input. Colour means
+   state here exactly as it does elsewhere; a trigger is neutral until something
+   inside it is chosen. */
 .library-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.library-filter-group {
-  transition: opacity 0.3s ease;
-}
-
-.library-filter-group.library-filter-faded {
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-.library-filter-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #888888;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-}
-
-.library-filter-note {
-  font-size: 0.8rem;
-  color: #555;
-  font-style: italic;
-  margin-top: 0.4rem;
-  display: none;
-}
-
-.library-filter-note.visible {
-  display: block;
-}
-
-/* Filter chips */
-.library-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.library-chip {
+.library-filter {
+  position: relative;
+}
+
+.library-filter-trigger {
   display: inline-flex;
   align-items: center;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.9rem;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.7rem 0.4rem 0.8rem;
   background: #151515;
   border: 1px solid #222222;
   border-radius: 6px;
@@ -106,136 +79,172 @@
   font-size: 0.85rem;
   font-weight: 500;
   font-family: inherit;
+  line-height: 1.2;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-  user-select: none;
-  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
+/* Red on hover, as everywhere else on the blog. Active stays unmistakable
+   because it adds the inset ring, the tinted fill and the count on top of the
+   same border, exactly the way .library-page-btn:hover and .library-page-active
+   already differ from each other. */
 @media (hover: hover) {
-  .library-chip:hover {
+  .library-filter-trigger:hover {
     border-color: var(--wh-red);
     color: #e0e0e0;
   }
 }
 
-.library-chip:focus-visible {
+.library-filter-trigger:focus-visible {
   border-color: var(--wh-red);
   box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.25);
   outline: none;
 }
 
-.library-chip.selected {
+/* Active means this facet is narrowing the results. Same accent language as the
+   rest of the page, with an inset ring so it reads by weight as well as hue. */
+.library-filter-trigger.active {
   border-color: var(--wh-red);
+  box-shadow: inset 0 0 0 1px var(--wh-red);
+  background: rgba(var(--wh-red-rgb), 0.16);
   color: #e0e0e0;
-  background: rgba(var(--wh-red-rgb), 0.08);
 }
 
-/* Difficulty chip accents */
-.library-chip-diff-easy {
-  border-left: 3px solid #3A7060;
-  padding-left: 0.7rem;
+.library-filter-trigger.active:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--wh-red), 0 0 0 2px rgba(var(--wh-red-rgb), 0.25);
 }
 
-.library-chip-diff-medium {
-  border-left: 3px solid #C4963E;
-  padding-left: 0.7rem;
+.library-filter-count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #888888;
 }
 
-.library-chip-diff-hard {
-  border-left: 3px solid var(--wh-red);
-  padding-left: 0.7rem;
-}
-
-.library-chip-diff-easy.selected {
-  background: rgba(58, 112, 96, 0.1);
-  border-color: #3A7060;
-  color: #5DC4A4;
-}
-
-.library-chip-diff-medium.selected {
-  background: rgba(196, 150, 62, 0.1);
-  border-color: #C4963E;
-  color: #E4B65E;
-}
-
-.library-chip-diff-hard.selected {
-  background: rgba(var(--wh-red-rgb), 0.1);
-  border-color: var(--wh-red);
+.library-filter-trigger.active .library-filter-count {
   color: var(--wh-red-light);
+}
+
+.library-filter-chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: #888888;
+  transition: transform 0.2s ease;
+}
+
+.library-filter-trigger[aria-expanded="true"] .library-filter-chevron {
+  transform: rotate(180deg);
+}
+
+.library-filter-trigger.active .library-filter-chevron {
+  color: var(--wh-red-light);
+}
+
+/* Panel */
+.library-filter-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  min-width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.3rem;
+  background: #151515;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.library-filter-panel[hidden] {
+  display: none;
+}
+
+/* Flipped when the panel would otherwise run past the right edge. */
+.library-filter-panel.align-right {
+  left: auto;
+  right: 0;
+}
+
+.library-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  color: #c0c0c0;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 @media (hover: hover) {
-  .library-chip-diff-easy:hover { border-color: #3A7060; }
-  .library-chip-diff-medium:hover { border-color: #C4963E; }
-  .library-chip-diff-hard:hover { border-color: var(--wh-red); }
+  .library-filter-option:hover {
+    background: rgba(var(--wh-red-rgb), 0.06);
+    color: #e0e0e0;
+  }
 }
 
-.library-chip-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.2rem;
-  height: 1.2rem;
-  padding: 0 0.3rem;
-  margin-left: 0.5rem;
-  background: #222222;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  font-weight: 500;
+.library-filter-option input {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--wh-red);
+  cursor: pointer;
+}
+
+.library-filter-option:focus-within {
+  background: rgba(var(--wh-red-rgb), 0.06);
+  box-shadow: inset 0 0 0 1px rgba(var(--wh-red-rgb), 0.5);
+}
+
+.library-filter-option-label {
+  flex: 1 1 auto;
+}
+
+.library-filter-option-count {
+  font-size: 0.75rem;
   color: #888888;
-  line-height: 1;
+  padding-left: 0.75rem;
 }
 
-.library-chip.selected .library-chip-count {
-  background: rgba(var(--wh-red-rgb), 0.15);
-  color: var(--wh-red);
+/* Difficulty options keep the value-level colour the card badges use: easy,
+   medium and hard are a scale, so the dot carries real information. The other
+   facets have no per-value semantics and get no dot. */
+.library-filter-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
 }
 
-.library-chip-diff-easy.selected .library-chip-count {
-  background: rgba(58, 112, 96, 0.2);
-  color: #5DC4A4;
-}
+.library-filter-dot-easy { background: #3A7060; }
+.library-filter-dot-medium { background: #C4963E; }
+.library-filter-dot-hard { background: var(--wh-red); }
 
-.library-chip-diff-medium.selected .library-chip-count {
-  background: rgba(196, 150, 62, 0.2);
-  color: #E4B65E;
-}
-
-.library-chip-diff-hard.selected .library-chip-count {
-  background: rgba(var(--wh-red-rgb), 0.2);
-  color: var(--wh-red-light);
-}
-
-/* Dead-end filter option: zero posts under the current selection.
-   Greyed and non-interactive so the reader can't land on an empty result.
-   A currently-selected chip is never greyed, even at count 0. */
-.library-chip-empty {
+/* Dead end: zero posts under the current selection. Disabled rather than hidden,
+   so the option's absence is never mistaken for it not existing. A checked
+   option is never disabled, or it could not be undone. */
+.library-filter-option.is-empty {
   opacity: 0.35;
   cursor: default;
   pointer-events: none;
 }
 
-.library-chip-empty .library-chip-count {
-  background: #1a1a1a;
-  color: #555555;
-}
-
-/* Divider */
-.library-divider {
-  border: none;
-  border-top: 1px solid #1a1a1a;
-  margin: 1.5rem 0;
-  height: 0;
-}
-
-/* Results header */
+/* Results header. Carries the rule that used to be a separate <hr>, so the
+   count and the divider are one element instead of two stacked ones. */
 .library-results-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #1a1a1a;
   margin-bottom: 1rem;
 }
 
@@ -245,7 +254,8 @@
 }
 
 .library-clear-btn {
-  display: none;
+  display: inline-flex;
+  visibility: hidden;
   padding: 0.35rem 0.75rem;
   background: transparent;
   border: 1px solid #333333;
@@ -526,16 +536,20 @@
     font-size: 16px;
   }
 
-  .library-chip {
+  /* 2.75rem is 44px at the 16px root, the iOS minimum target. Applies to the
+     trigger and to every option row, since both are tapped. */
+  .library-filter-trigger {
     min-height: 2.75rem;
     font-size: 0.82rem;
-    padding: 0.5rem 0.8rem;
   }
 
-  .library-chip-diff-easy,
-  .library-chip-diff-medium,
-  .library-chip-diff-hard {
-    padding-left: 0.6rem;
+  .library-filter-option {
+    min-height: 2.75rem;
+    font-size: 0.85rem;
+  }
+
+  .library-filter-panel {
+    max-height: 50vh;
   }
 
   .library-post-card {
@@ -583,13 +597,8 @@
 
 /* ── Small phones ── */
 @media (max-width: 480px) {
-  .library-results-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .library-chip {
+  .library-filter-trigger {
     font-size: 0.8rem;
+    padding-left: 0.7rem;
   }
 }
