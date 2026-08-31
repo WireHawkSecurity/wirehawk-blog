@@ -1,5 +1,5 @@
 ---
-title: "Health Smarter ⚕️ | Hack Smarter Labs"
+title: "Health Smarter 🩺 | Hack Smarter Labs"
 date: 2026-08-30
 summary: "A medium-difficulty web application lab chaining a breached-credential spray, an MFA bypass through a pre-authenticated session, and stored XSS that exfiltrates the admin portal."
 platforms: ["Hack Smarter Labs"]
