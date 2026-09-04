@@ -191,7 +191,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: SG-DC01; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. We add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 and SQL Server 2019 on 1433 also exposed, neither of which is part of a default domain controller install. The LDAP banner confirms the domain as `shadowgate.local` and the hostname as `SG-DC01.shadowgate.local`, and the SSL certificate issuer reveals a CA named `Shadowgate-CA`. We add `shadowgate.local` and `SG-DC01.shadowgate.local` to `/etc/hosts` before continuing.
 
 ## HTTP (Port 80)
 
@@ -639,7 +639,7 @@ SMB         10.1.24.100     445    SG-DC01          [-] shadowgate.local\oscar.m
 
 *oscar.m authentication rejected with STATUS_INVALID_LOGON_HOURS*
 
-The password change works, but `STATUS_INVALID_LOGON_HOURS` means the account is restricted to a logon schedule that does not include now. `GenericAll` also lets us write the account's attributes, so we overwrite `logonHours` with an all-ones value that permits authentication at any hour.
+The password change works, but `STATUS_INVALID_LOGON_HOURS` means the account is restricted to a logon schedule that does not include now. `GenericAll` also lets us write the account's attributes, so we overwrite `logonHours` with an all-ones value that permits authentication at any hour. bloodyAD writes Active Directory object attributes from the command line, and `set object` writes the value we give it.
 
 ```
 bloodyad -u 'bogdan.r' -p 'bogdan0126' -d 'shadowgate.local' --host '10.1.24.100' set object 'CN=oscar.m,CN=Users,DC=shadowgate,DC=local' logonHours -v '////////////////////////////' --b64

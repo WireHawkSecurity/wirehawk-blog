@@ -121,7 +121,7 @@ The `mfa` field for admin is now populated. We enter the code and complete the l
 
 ![Admin panel flag](images/admin-flag.png)
 
-*Admin panel accessed with first flag retrieved*
+*The Admin Panel reached after completing the MFA login*
 
 ## Shell as root (root.txt)
 
@@ -195,7 +195,7 @@ We confirm with `id` that we are root and grab the final flag from `/root/root.t
 
 ![root.txt flag](images/root-flag.png)
 
-*root.txt: final flag captured from /root directory*
+*The final flag file root.txt listed in /root*
 
 ## Final Thoughts
 

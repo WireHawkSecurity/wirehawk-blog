@@ -140,7 +140,7 @@ PORT      STATE SERVICE       REASON          VERSION
 Service Info: Host: DC-404; OS: Windows; CPE: cpe:/o:microsoft:windows
 ```
 
-Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, SMB on 445, LDAPS on 636, the global catalog on 3268 and 3269, RDP on 3389, and WinRM on 5985. IIS on 80 is also exposed, which is not part of a default domain controller install. The LDAP banner gives us the domain as `404finance.local`, and the certificate subject and RDP NTLM info confirm the hostname as `DC-404.404finance.local`. We add both to `/etc/hosts` before continuing.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 also exposed, which is not part of a default domain controller install. The LDAP banner gives us the domain as `404finance.local`, and the certificate subject and RDP NTLM info confirm the hostname as `DC-404.404finance.local`. We add both to `/etc/hosts` before continuing.
 
 ## HTTP (Port 80)
 
@@ -574,7 +574,7 @@ That gives us a password for Daniel Hoffmann, and the username format from the s
 
 ## Shell as daniel.hoffmann (user.txt)
 
-We test what the email gave us.
+We test what the email gives us.
 
 ```
 nxc smb 10.1.143.161 -u 'daniel.hoffmann' -p 'RemoteAccess!2024' --shares
@@ -852,7 +852,7 @@ SMB         10.1.143.161    445    DC-404           [-] 404finance.local\svc.ser
 
 *NetExec confirming the svc.services password while reporting the account as disabled*
 
-The password is right. NTLM validates the password before it evaluates account restrictions, which is why this comes back `STATUS_ACCOUNT_DISABLED` rather than `STATUS_LOGON_FAILURE`. `robert.graef` holds `WriteAccountRestrictions` over this account, which lets us write the account's attributes, so we go back to that account and clear the `ACCOUNTDISABLE` flag out of `userAccountControl`.
+The password is right. NTLM validates the password before it evaluates account restrictions, which is why this comes back `STATUS_ACCOUNT_DISABLED` rather than `STATUS_LOGON_FAILURE`. `robert.graef` holds `WriteAccountRestrictions` over this account, which lets us write the account's attributes, so we go back to that account and clear the `ACCOUNTDISABLE` flag out of `userAccountControl`. bloodyAD writes Active Directory object attributes from the command line, and `remove uac` clears the flag we name.
 
 ```
 bloodyad --host DC-404.404finance.local -d 404finance.local -u robert.graef -p '0xB1rdWasHere1337!' remove uac svc.services -f ACCOUNTDISABLE
@@ -1097,7 +1097,7 @@ Certificate Templates
 
 *Certipy now flagging ESC1 on Vuln-ESC4, with manager approval cleared and enrollment open to Authenticated Users*
 
-Manager approval is gone, the signature requirement is gone, and the template is flagged ESC1: the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. We request a certificate naming `Administrator`, then authenticate as that account via PKINIT, the Kerberos extension that lets a certificate stand in for a password. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account, and BloodHound has it as the Object ID on the `Administrator` node.
+Manager approval is gone, the signature requirement is gone, and the template is flagged ESC1: the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. We request a certificate naming `Administrator`, then authenticate as that account via PKINIT, the Kerberos extension that lets a certificate stand in for a password. `-sid` puts the target SID (security identifier) in the Subject Alternative Name so a current DC maps the certificate to the right account, and BloodHound has it as the Object ID on the `Administrator` node.
 
 ```
 certipy-ad req -u 'svc.services@404finance.local' -p 'S3rv1cePower2024!' -dc-ip 10.1.143.161 -dc-host DC-404.404finance.local -ns 10.1.143.161 -ca '404finance-DC-404-CA' -template 'Vuln-ESC4' -upn 'administrator@404finance.local' -sid 'S-1-5-21-2956725473-317782918-2795636496-500'
@@ -1165,7 +1165,7 @@ evil-winrm -i '10.1.143.161' -u 'administrator' -H 'a6019e48da8f602a60c30a6f0136
 
 ## Final Thoughts
 
-Every ESC template path I have run before started with someone else's misconfiguration. `Vuln-ESC4` was different: the rights sat on the template object itself, so the misconfiguration was mine to write. The certificate request was the one step that fought me, taking several attempts before it issued.
+Every ESC template path I have run before started with someone else's misconfiguration. `Vuln-ESC4` was different: the rights sat on the template object itself, so the misconfiguration was mine to write. The certificate request took several attempts before it issued.
 
 The password that started the chain shipped inside a public download. A hashed credential inside a downloadable client is still a published credential. The next one was mailed between staff, then "deleted" into the recycle bin. Credentials belong in a password manager, not an inbox. An archive of service credentials needs a password that is not on the company website. Object-level rights like these need auditing on a schedule rather than at build time. Certificate templates belong in that same audit, because a writable one hands out a certificate for anyone the holder names.
 

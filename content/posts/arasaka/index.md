@@ -510,7 +510,7 @@ Certipy flags ESC1 on the `AI_Takeover` template. The CA is `hacksmarter-DC01-CA
 
 [ESC1](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation) is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
 
-We request a certificate as `Administrator`, taking the SID off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
+We request a certificate as `Administrator`, taking the SID (security identifier) off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
 
 ```
 certipy-ad req -u 'soulkiller.svc' -p 'MYpassword123#' -dc-ip '10.0.21.50' -target 'dc01.hacksmarter.local' -ca 'hacksmarter-DC01-CA' -template 'AI_Takeover' -upn 'administrator@hacksmarter.local' -sid 'S-1-5-21-3154413470-3340737026-2748725799-500'
@@ -552,7 +552,7 @@ certipy-ad auth -pfx 'administrator.pfx' -dc-ip '10.0.21.50'
 
 *Certipy PKINIT fails for Administrator: the account password has expired*
 
-This one fails on `KDC_ERR_KEY_EXPIRED`. The certificate proves our identity, but the KDC enforces the account's password state before issuing a ticket, and an expired password blocks the TGT. We go back to BloodHound and open the `Domain Admins` group to look for another target.
+This one fails on `KDC_ERR_KEY_EXPIRED`. The certificate proves our identity, but the KDC (Key Distribution Center) enforces the account's password state before issuing a ticket, and an expired password blocks the TGT. We go back to BloodHound and open the `Domain Admins` group to look for another target.
 
 ![BloodHound Domain Admins members](images/bloodhound-domain-admins.png)
 
@@ -656,7 +656,7 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 ![root.txt flag](images/root-flag.png)
 
-*root.txt captured from the Administrator desktop*
+*root.txt listed on the Administrator desktop*
 
 ## Final Thoughts
 

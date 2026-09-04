@@ -57,7 +57,7 @@ The machine details tab provides the open ports, so we skip port scanning for no
 9389/tcp  open  mc-nmf        .NET Message Framing
 ```
 
-Standard domain controller ports across the board. DNS on 53, HTTP on 80, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985. With no credentials we start where the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) does, at anonymous and guest access.
+Standard domain controller ports across the board. DNS on 53, Kerberos on 88, LDAP on 389, LDAPS on 636, the global catalog on 3268 and 3269, SMB on 445, RDP on 3389, and WinRM on 5985, with IIS on 80 also exposed, which is not part of a default domain controller install. With no credentials we start where the [AD mindmap](https://orange-cyberdefense.github.io/ocd-mindmaps/) does, at anonymous and guest access.
 
 ## SMB Enumeration
 
@@ -90,7 +90,7 @@ SMB         10.0.30.253    445    DC01             [*] Enumerated 12 local users
 
 *Anonymous SMB authentication with 12 domain users enumerated*
 
-Anonymous authentication is permitted and SAMR hands us all 12 accounts. The output confirms the hostname as `DC01`, so we add `DC01.shadow.gate` to `/etc/hosts` and save the usernames to a `usernames.txt` file.
+Anonymous authentication is permitted and SAMR (Security Account Manager Remote) hands us all 12 accounts. The output confirms the hostname as `DC01`, so we add `DC01.shadow.gate` to `/etc/hosts` and save the usernames to a `usernames.txt` file.
 
 ```
 Administrator
@@ -109,7 +109,7 @@ amoss
 
 ## Access as jtrueblood
 
-With a user list and no credentials, AS-REP Roasting is the next move. Kerberos normally requires pre-authentication before the KDC returns anything, but an account with pre-authentication disabled gets an AS-REP handed to anyone who asks. Part of that response is encrypted with a key derived from the account's password, and that is the part we crack offline.
+With a user list and no credentials, AS-REP Roasting is the next move. Kerberos normally requires pre-authentication before the KDC (Key Distribution Center) returns anything, but an account with pre-authentication disabled gets an AS-REP handed to anyone who asks. Part of that response is encrypted with a key derived from the account's password, and that is the part we crack offline.
 
 ```
 nxc ldap 10.0.30.253 -u usernames.txt -p '' --asreproast output.txt

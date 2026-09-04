@@ -329,7 +329,7 @@ SMB         10.1.62.227     445    DC01             [+] DRY.MARTINI.BARS\ATHENA_
 
 *Password spray: athena.t0 reuses the ATHENA_SVC password and comes back Pwn3d!*
 
-The first four attempts drop on NETBIOS connection timeouts, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` never get tested against this password. `athena.t0` authenticates and NetExec tags it `(Pwn3d!)`. That flag means administrative access on the target, and the target here is the domain controller.
+The first four attempts drop on NETBIOS connection timeouts, which means `Administrator`, `Guest`, `krbtgt`, and `mprice` never get tested against this password. `athena.t0` authenticates, and NetExec's `(Pwn3d!)` marks administrative access on the host. That host is the domain controller, so we now control the domain.
 
 ## NTDS Dump
 

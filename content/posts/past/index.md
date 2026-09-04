@@ -144,7 +144,7 @@ DEV01
 
 *The AD_machines.txt file from the open Share, listing APPDEV01, WEBDEV01, and DEV01 as staged machines*
 
-The file lists machines being added to the domain, matching what the client said about adding new machines to the network. Three of them (`APPDEV01`, `WEBDEV01`, `DEV01`) have no DNS record yet, which reads as computer accounts staged ahead of the machines themselves. The guest session won't return the domain users through `--users`, since SAMR (Security Account Manager Remote) enumeration is typically restricted to authenticated users and `Guest` is not one, so we use `--rid-brute` instead. It walks the domain SID's RIDs (relative identifiers) one at a time and resolves each to a name, which the guest session can still do, and we filter the output down to user objects.
+The file lists machines being added to the domain, matching what the client said about adding new machines to the network. Three of them (`APPDEV01`, `WEBDEV01`, `DEV01`) have no DNS record yet, which reads as computer accounts staged ahead of the machines themselves. The guest session won't return the domain users through `--users`, since SAMR (Security Account Manager Remote) enumeration is typically restricted to authenticated users and `Guest` is not one, so we use `--rid-brute` instead. It walks the RIDs (relative identifiers) under the domain SID (security identifier) one at a time and resolves each to a name, which the guest session can still do, and we filter the output down to user objects.
 
 ```
 nxc smb 10.0.30.204 -u 'a' -p '' --rid-brute | grep "(SidTypeUser)"
@@ -575,7 +575,7 @@ evil-winrm -i '10.0.30.204' -u 'Administrator' -H '31592a42841d0a9e74f93c41d8884
 
 ![Administrator shell and root flag](images/root-flag.png)
 
-*Evil-WinRM session as Administrator with root.txt*
+*Evil-WinRM session as Administrator with root.txt listed on the desktop*
 
 One credential is still outstanding, `ryan`'s password. Administrator sessions leave a trail, so we check where PowerShell stores its history.
 

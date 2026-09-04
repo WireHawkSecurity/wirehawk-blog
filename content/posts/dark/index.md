@@ -205,7 +205,7 @@ The user flag is waiting in `/var/www`.
 
 ![User flag](images/user-flag.png)
 
-*The user.txt flag retrieved from /var/www*
+*user.txt listed in /var/www*
 
 ## Shell as root (root.txt)
 
@@ -227,7 +227,7 @@ docker run -v /:/mnt --rm -it alpine chroot /mnt sh
 
 ![Root shell](images/root-flag.png)
 
-*A root shell on the host with the root.txt flag from /root*
+*A root shell on the host with root.txt listed in /root*
 
 We are root. The final flag is in `/root`.
 

@@ -505,7 +505,7 @@ Certipy flags ESC1 on the `Welcome-Template`. The CA is `WELCOME-CA`, the templa
 
 [ESC1](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation) is a template misconfiguration where the requester can specify an arbitrary identity in the Subject Alternative Name and the template includes a client authentication EKU. A user with enrollment rights can request a certificate naming any UPN, including a domain admin, and the CA issues it without manager approval. We then authenticate as that user via PKINIT, the Kerberos extension that lets a certificate stand in for a password.
 
-We request a certificate as `Administrator`, taking the SID off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
+We request a certificate as `Administrator`, taking the SID (security identifier) off the Administrator object in BloodHound under the Object Information tab. `-sid` puts the target SID in the Subject Alternative Name so a current DC maps the certificate to the right account.
 
 ```
 certipy-ad req -u 'svc_ca@WELCOME.local' -p '0xB1rdWasHere1337' -dc-ip '10.1.92.228' -target 'DC01.WELCOME.LOCAL' -ca 'WELCOME-CA' -template 'Welcome-Template' -upn 'administrator@WELCOME.local' -sid 'S-1-5-21-141921413-1529318470-1830575104-500'
@@ -558,7 +558,7 @@ We grab `root.txt` from the Administrator's desktop and the domain is fully comp
 
 ![root.txt flag](images/root-flag.png)
 
-*root.txt captured from the Administrator desktop*
+*root.txt listed on the Administrator desktop*
 
 ## Final Thoughts
 
