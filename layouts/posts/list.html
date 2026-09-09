@@ -43,7 +43,7 @@
     {{- $cover := "" }}
     {{- with $p.Params.cover }}
     {{- with $p.Resources.GetMatch (.image | default "no-cover-match") }}
-    {{- $cover = (.Fill "384x216 center webp q80").RelPermalink }}
+    {{- $cover = (.Fill "576x324 center webp q80").RelPermalink }}
     {{- end }}
     {{- end }}
     {
