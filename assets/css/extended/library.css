@@ -597,7 +597,7 @@
   }
 
   .library-post-meta {
-    margin-top: 0.5rem;
+    margin-top: 0;
     flex-wrap: wrap;
   }
 
@@ -607,7 +607,7 @@
 
   .library-post-summary {
     font-size: 0.82rem;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
@@ -615,7 +615,7 @@
   .library-post-date {
     margin-left: 0;
     width: 100%;
-    margin-top: 0.35rem;
+    margin-top: 0;
   }
 }
 
