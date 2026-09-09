@@ -296,6 +296,7 @@
   grid-template-areas:
     "thumb title"
     "thumb summary"
+    "thumb excerpt"
     "thumb meta";
   column-gap: 1.25rem;
   background: #151515;
@@ -564,6 +565,7 @@
     grid-template-areas:
       "thumb title"
       "summary summary"
+      "excerpt excerpt"
       "meta meta";
     align-items: start;
     column-gap: 0.9rem;
@@ -613,8 +615,11 @@
 /* ── Search excerpt ──
    Shown only on cards matched by a Pagefind body hit. Without it a match on a
    command inside a code block looks like a false positive, since nothing in the
-   title or summary explains why the card is there. */
+   title or summary explains why the card is there. It needs its own named grid
+   area or it auto-places into the thumbnail column. The row collapses to zero
+   height when no search is running, since the card sets no row-gap. */
 .library-post-excerpt {
+  grid-area: excerpt;
   margin: 0.35rem 0 0;
   font-size: 0.82rem;
   line-height: 1.5;

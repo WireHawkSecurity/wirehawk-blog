@@ -261,11 +261,31 @@
 
     if (!q) { pfUrls = null; pfExcerpts = {}; refresh(); return; }
 
+    // Quoted matches whole words only, so a half-typed term finds nothing.
+    // When that happens on a single word, retry unquoted for partial matches
+    // and keep only results whose highlighted word actually starts with what
+    // was typed. That is what separates "certi" finding Certipy from
+    // "godpotato" matching the word "going".
     pfLoad().then(function (pf) {
-      return pf.search('"' + q + '"');
-    }).then(function (res) {
+      return pf.search('"' + q + '"').then(function (res) {
+        if (res.results.length || /\s/.test(q)) return res.results;
+        return pf.search(q).then(function (loose) {
+          return Promise.all(loose.results.map(function (r) {
+            return r.data().then(function (d) { return { r: r, d: d }; });
+          })).then(function (pairs) {
+            var pre = q.toLowerCase();
+            return pairs.filter(function (p) {
+              var marks = p.d.excerpt.match(/<mark>(.*?)<\/mark>/g) || [];
+              return marks.some(function (m) {
+                return m.replace(/<\/?mark>/g, '').toLowerCase().indexOf(pre) === 0;
+              });
+            }).map(function (p) { return p.r; });
+          });
+        });
+      });
+    }).then(function (results) {
       if (token !== pfToken) return null;
-      return Promise.all(res.results.map(function (r) { return r.data(); }));
+      return Promise.all(results.map(function (r) { return r.data(); }));
     }).then(function (datas) {
       if (!datas || token !== pfToken) return;
       var urls = {}, ex = {};
@@ -277,6 +297,17 @@
       pfUrls = null; pfExcerpts = {};
       refresh();
     });
+  }
+
+  // Pagefind centres its excerpt on the match, but the card clamps to two lines,
+  // so a term sitting fifteen words in never makes it onto the page. Drop the
+  // run-up so the highlighted term lands on the first line.
+  function trimToMatch(html) {
+    var i = html.indexOf('<mark>');
+    if (i < 1) return html;
+    var words = html.slice(0, i).split(/\s+/).filter(Boolean);
+    if (words.length <= 6) return html;
+    return '\u2026 ' + words.slice(-6).join(' ') + ' ' + html.slice(i);
   }
 
   // Core matcher. opts.skip lets a facet group ignore its OWN active selection
@@ -460,7 +491,7 @@
       if (exHtml) {
         var excerpt = document.createElement('div');
         excerpt.className = 'library-post-excerpt';
-        excerpt.innerHTML = exHtml;
+        excerpt.innerHTML = trimToMatch(exHtml);
         card.appendChild(excerpt);
       }
 
