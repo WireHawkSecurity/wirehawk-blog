@@ -325,6 +325,8 @@
 .library-post-thumb {
   grid-area: thumb;
   width: 230px;
+  aspect-ratio: 16 / 9;
+  align-self: start;
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid #333333;
@@ -369,7 +371,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 /* Badges wrap among themselves rather than pushing the date onto its own line,
@@ -380,6 +382,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   min-width: 0;
+  width: 100%;
 }
 
 /* Post badges */
@@ -433,9 +436,10 @@
 .library-post-date {
   font-size: 0.7rem;
   color: #555;
-  margin-left: auto;
   white-space: nowrap;
   flex-shrink: 0;
+  width: 100%;
+  margin-top: 0.4rem;
 }
 
 /* Empty state */
