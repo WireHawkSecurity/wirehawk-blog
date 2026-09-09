@@ -449,18 +449,35 @@
       title.className = 'library-post-title';
       title.textContent = post.title;
 
+      // While a search is running the excerpt replaces the summary rather than
+      // taking a row of its own. The desktop thumbnail has no fixed aspect ratio
+      // and fills the card height with object-fit: cover, so an extra row would
+      // stretch and crop the machine card.
+      var exHtml = pfExcerpts[post.permalink];
       var summary = document.createElement('div');
-      summary.className = 'library-post-summary';
-      summary.textContent = post.summary;
+      if (exHtml) {
+        summary.className = 'library-post-summary library-post-excerpt';
+        summary.innerHTML = trimToMatch(exHtml);
+      } else {
+        summary.className = 'library-post-summary';
+        summary.textContent = post.summary;
+      }
 
       var meta = document.createElement('div');
       meta.className = 'library-post-meta';
+
+      // The badges sit in their own wrapping container. Left in the same flex
+      // row as the date, a wide badge set (Active Directory + Medium) pushed the
+      // date onto a second line while a narrow one (Linux + Easy) did not, so
+      // the date landed in a different place from card to card.
+      var badges = document.createElement('div');
+      badges.className = 'library-post-badges';
 
       (post.platforms || []).forEach(function (p) {
         var badge = document.createElement('span');
         badge.className = 'library-badge library-badge-platform';
         badge.textContent = p;
-        meta.appendChild(badge);
+        badges.appendChild(badge);
       });
 
       (post.tags || []).forEach(function (t) {
@@ -468,33 +485,25 @@
         badge.className = 'library-badge library-badge-tag';
         if (t === 'Resources') badge.className = 'library-badge library-badge-resource';
         badge.textContent = t;
-        meta.appendChild(badge);
+        badges.appendChild(badge);
       });
 
       if (post.difficulty) {
         var diffBadge = document.createElement('span');
         diffBadge.className = 'library-badge ' + diffBadgeClass(post.difficulty);
         diffBadge.textContent = post.difficulty;
-        meta.appendChild(diffBadge);
+        badges.appendChild(diffBadge);
       }
 
       var date = document.createElement('span');
       date.className = 'library-post-date';
       date.textContent = post.date + ' \u00b7 ' + post.readingTime + ' min';
+
+      meta.appendChild(badges);
       meta.appendChild(date);
 
       card.appendChild(title);
       card.appendChild(summary);
-
-      // A body-only hit reads as a false positive without showing where it landed.
-      var exHtml = pfExcerpts[post.permalink];
-      if (exHtml) {
-        var excerpt = document.createElement('div');
-        excerpt.className = 'library-post-excerpt';
-        excerpt.innerHTML = trimToMatch(exHtml);
-        card.appendChild(excerpt);
-      }
-
       card.appendChild(meta);
       postListEl.appendChild(card);
     });

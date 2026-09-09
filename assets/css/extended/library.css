@@ -296,7 +296,6 @@
   grid-template-areas:
     "thumb title"
     "thumb summary"
-    "thumb excerpt"
     "thumb meta";
   column-gap: 1.25rem;
   background: #151515;
@@ -370,7 +369,17 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* Badges wrap among themselves rather than pushing the date onto its own line,
+   so the date sits in the same place on every card regardless of badge width. */
+.library-post-badges {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 /* Post badges */
@@ -425,6 +434,8 @@
   font-size: 0.7rem;
   color: #555;
   margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Empty state */
@@ -565,7 +576,6 @@
     grid-template-areas:
       "thumb title"
       "summary summary"
-      "excerpt excerpt"
       "meta meta";
     align-items: start;
     column-gap: 0.9rem;
@@ -584,6 +594,7 @@
 
   .library-post-meta {
     margin-top: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .library-post-title {
@@ -613,32 +624,14 @@
 }
 
 /* ── Search excerpt ──
-   Shown only on cards matched by a Pagefind body hit. Without it a match on a
-   command inside a code block looks like a false positive, since nothing in the
-   title or summary explains why the card is there. It needs its own named grid
-   area or it auto-places into the thumbnail column. The row collapses to zero
-   height when no search is running, since the card sets no row-gap. */
-.library-post-excerpt {
-  grid-area: excerpt;
-  margin: 0.35rem 0 0;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: #888888;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
+   Occupies the summary slot while a search is running, so a matched card keeps
+   exactly the geometry it had. It cannot take a row of its own: the desktop
+   thumbnail has no fixed aspect ratio and fills the card height with
+   object-fit: cover, so a taller card would stretch and crop the machine card.
+   Inherits every .library-post-summary rule including the line clamp. */
 .library-post-excerpt mark {
   background: rgba(var(--wh-red-rgb), 0.16);
   color: var(--wh-red-light);
   padding: 0 0.15em;
   border-radius: 2px;
-}
-
-@media (max-width: 768px) {
-  .library-post-excerpt {
-    -webkit-line-clamp: 3;
-  }
 }
