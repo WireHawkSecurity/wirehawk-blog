@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.163.0
+      PAGEFIND_VERSION: 1.5.2
+      PAGEFIND_SHA256: afb824a9e7f64905a934900481cea5be679c03975e527329e0e5e6cc70f5feda
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,10 +35,14 @@ jobs:
 
       - name: Install Hugo
         run: |
-          curl -sLJO "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          HUGO_TAR="hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          HUGO_SUMS="hugo_${HUGO_VERSION}_checksums.txt"
+          curl -sLJO "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/${HUGO_TAR}"
+          curl -sLJO "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/${HUGO_SUMS}"
+          grep " ${HUGO_TAR}$" "${HUGO_SUMS}" | sha256sum -c -
           mkdir -p "${HOME}/.local/hugo"
-          tar -C "${HOME}/.local/hugo" -xf "hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
-          rm "hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          tar -C "${HOME}/.local/hugo" -xf "${HUGO_TAR}"
+          rm "${HUGO_TAR}" "${HUGO_SUMS}"
           echo "${HOME}/.local/hugo" >> "${GITHUB_PATH}"
 
       - name: Build the site
@@ -45,6 +51,20 @@ jobs:
             --gc \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+
+      - name: Index with Pagefind
+        run: |
+          PF_TAR="pagefind-v${PAGEFIND_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+          curl -sLJO "https://github.com/Pagefind/pagefind/releases/download/v${PAGEFIND_VERSION}/${PF_TAR}"
+          echo "${PAGEFIND_SHA256}  ${PF_TAR}" | sha256sum -c -
+          mkdir -p "${HOME}/.local/pagefind"
+          tar -C "${HOME}/.local/pagefind" -xf "${PF_TAR}"
+          rm "${PF_TAR}"
+          "${HOME}/.local/pagefind/pagefind" \
+            --site public \
+            --root-selector ".post-content" \
+            --include-characters='-_.' \
+            --glob="posts/**/*.html"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

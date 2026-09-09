@@ -228,6 +228,57 @@
 
   if (allFacets.length === 0) filtersEl.style.display = 'none';
 
+  // ---- Pagefind full-text search ----------------------------------------
+  // The metadata haystack below only ever covered title/summary/tags, so a
+  // technique or a command in the body was unfindable. Pagefind indexes the
+  // built HTML and answers with a URL set that this filter intersects.
+  var PF_BASE = '/pagefind/';
+  var pfLib = null, pfLoading = null, pfFailed = false;
+  var pfUrls = null;      // map of matching permalinks, null when no query
+  var pfExcerpts = {};    // permalink -> highlighted excerpt html
+  var pfToken = 0;
+
+  function pfLoad() {
+    if (pfLib) return Promise.resolve(pfLib);
+    if (pfFailed) return Promise.reject(new Error('pagefind unavailable'));
+    if (!pfLoading) {
+      pfLoading = import(PF_BASE + 'pagefind.js').then(function (m) {
+        m.options({ basePath: PF_BASE });
+        pfLib = m;
+        return m;
+      }).catch(function (e) { pfFailed = true; throw e; });
+    }
+    return pfLoading;
+  }
+
+  // Quoting the query is load-bearing. Unquoted, Pagefind falls back to fuzzy
+  // matching and a term absent from the corpus returns a page of noise rather
+  // than nothing. Quoted, it keeps stemming and prefix matching but returns
+  // zero for a term that genuinely is not there.
+  function pfSearch(raw) {
+    var q = String(raw).replace(/"/g, '').trim();
+    var token = ++pfToken;
+
+    if (!q) { pfUrls = null; pfExcerpts = {}; refresh(); return; }
+
+    pfLoad().then(function (pf) {
+      return pf.search('"' + q + '"');
+    }).then(function (res) {
+      if (token !== pfToken) return null;
+      return Promise.all(res.results.map(function (r) { return r.data(); }));
+    }).then(function (datas) {
+      if (!datas || token !== pfToken) return;
+      var urls = {}, ex = {};
+      datas.forEach(function (d) { urls[d.url] = true; ex[d.url] = d.excerpt; });
+      pfUrls = urls; pfExcerpts = ex;
+      refresh();
+    }).catch(function () {
+      if (token !== pfToken) return;
+      pfUrls = null; pfExcerpts = {};
+      refresh();
+    });
+  }
+
   // Core matcher. opts.skip lets a facet group ignore its OWN active selection
   // when tallying counts, so sibling options in that group stay visible; every
   // other group (and the search box) still constrains the tally.
@@ -260,17 +311,23 @@
 
     var query = searchInput.value.toLowerCase().trim();
     if (query) {
-      var haystack = [
-        post.title,
-        post.summary,
-        (post.platforms || []).join(' '),
-        (post.tags || []).join(' '),
-        post.difficulty || ''
-      ].join(' ').toLowerCase();
+      if (pfFailed) {
+        // Pagefind did not load. Degrade to the old metadata match rather than
+        // leaving the search box dead.
+        var haystack = [
+          post.title,
+          post.summary,
+          (post.platforms || []).join(' '),
+          (post.tags || []).join(' '),
+          post.difficulty || ''
+        ].join(' ').toLowerCase();
 
-      var words = query.split(/\s+/);
-      var allMatch = words.every(function (w) { return haystack.indexOf(w) > -1; });
-      if (!allMatch) return false;
+        var words = query.split(/\s+/);
+        var allMatch = words.every(function (w) { return haystack.indexOf(w) > -1; });
+        if (!allMatch) return false;
+      } else if (pfUrls) {
+        if (!pfUrls[post.permalink]) return false;
+      }
     }
 
     return true;
@@ -397,6 +454,16 @@
 
       card.appendChild(title);
       card.appendChild(summary);
+
+      // A body-only hit reads as a false positive without showing where it landed.
+      var exHtml = pfExcerpts[post.permalink];
+      if (exHtml) {
+        var excerpt = document.createElement('div');
+        excerpt.className = 'library-post-excerpt';
+        excerpt.innerHTML = exHtml;
+        card.appendChild(excerpt);
+      }
+
       card.appendChild(meta);
       postListEl.appendChild(card);
     });
@@ -500,6 +567,7 @@
   function clearAll() {
     activeFilters = { platform: [], tag: [], diff: [], type: [] };
     searchInput.value = '';
+    pfToken++; pfUrls = null; pfExcerpts = {};
     allFacets.forEach(function (f) {
       f.options.forEach(function (o) { o.box.checked = false; });
     });
@@ -507,7 +575,12 @@
     refresh();
   }
 
-  searchInput.addEventListener('input', refresh);
+  var searchTimer = null;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    var v = searchInput.value;
+    searchTimer = setTimeout(function () { pfSearch(v); }, 150);
+  });
   clearBtn.addEventListener('click', clearAll);
   clearLink.addEventListener('click', clearAll);
 

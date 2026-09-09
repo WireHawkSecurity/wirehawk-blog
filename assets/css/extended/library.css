@@ -609,3 +609,31 @@
     padding-left: 0.7rem;
   }
 }
+
+/* ── Search excerpt ──
+   Shown only on cards matched by a Pagefind body hit. Without it a match on a
+   command inside a code block looks like a false positive, since nothing in the
+   title or summary explains why the card is there. */
+.library-post-excerpt {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #888888;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-post-excerpt mark {
+  background: rgba(var(--wh-red-rgb), 0.16);
+  color: var(--wh-red-light);
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .library-post-excerpt {
+    -webkit-line-clamp: 3;
+  }
+}
