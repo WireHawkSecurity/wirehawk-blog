@@ -111,22 +111,33 @@
         }
 
         copybutton.addEventListener('click', (cb) => {
+            // Chroma emits a newline before the closing </code>, so textContent
+            // carries a trailing blank line into the clipboard and the pasted
+            // command runs itself. Strip trailing newlines only, so indentation
+            // and any meaningful trailing spaces survive.
+            const codeText = codeblock.textContent.replace(/\n+$/, '');
+
             if ('clipboard' in navigator) {
-                navigator.clipboard.writeText(codeblock.textContent);
+                navigator.clipboard.writeText(codeText);
                 copyingDone();
                 return;
             }
 
-            const range = document.createRange();
-            range.selectNodeContents(codeblock);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
+            // Fallback path: execCommand copies the live selection, so the
+            // trimmed string above cannot be used. Copy from a detached textarea
+            // instead, which takes the same trimmed value.
+            const scratch = document.createElement('textarea');
+            scratch.value = codeText;
+            scratch.setAttribute('readonly', '');
+            scratch.style.position = 'absolute';
+            scratch.style.left = '-9999px';
+            document.body.appendChild(scratch);
+            scratch.select();
             try {
                 document.execCommand('copy');
                 copyingDone();
             } catch (e) { };
-            selection.removeRange(range);
+            document.body.removeChild(scratch);
         });
 
         if (container.classList.contains("highlight")) {
