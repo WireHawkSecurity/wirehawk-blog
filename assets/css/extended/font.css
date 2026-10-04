@@ -397,6 +397,12 @@ a:hover {
   height: 0.8em;
 }
 
+/* Pull the input nearer the heading. The theme leaves a 20px --content-gap under
+   .page-header, which reads loose on a search page. Scoped to the search header. */
+.page-header:has(svg) {
+  margin-bottom: 0.75rem;
+}
+
 /* The theme makes the input bold and full-width, which reads oversized and
    stretches the field the whole content width on desktop. Normal weight, a 16px
    field (16px also stops iOS Safari zooming in on focus), a bit more padding, and
