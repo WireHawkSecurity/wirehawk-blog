@@ -386,7 +386,15 @@ a:hover {
 .page-header h1:has(svg) {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.25rem;
+}
+
+/* Size the icon relative to the heading so it stays proportional across
+   breakpoints, rather than the theme's fixed 28px — which on a phone is larger
+   than the 26px heading and on desktop is smaller than the 40px heading. */
+.page-header h1:has(svg) svg {
+  width: 0.8em;
+  height: 0.8em;
 }
 
 /* The theme makes the input bold and full-width, which reads oversized and
@@ -544,6 +552,11 @@ a:hover {
 
   .page-header h1 {
     font-size: 26px;
+  }
+
+  /* Refine the search title on phones so the word and icon read as one lockup. */
+  .page-header h1:has(svg) {
+    font-size: 24px;
   }
 
   .home-info .entry-header h1 {
