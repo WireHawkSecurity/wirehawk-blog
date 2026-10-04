@@ -7,7 +7,7 @@ theme = "PaperMod"
   pagerSize = 10
 
 [outputs]
-  home = ["HTML", "RSS"]
+  home = ["HTML", "RSS", "JSON"]
 
 # Taxonomies disabled — filtering is handled by the Posts library
 [taxonomies]
@@ -28,6 +28,19 @@ theme = "PaperMod"
   tocopen = false
   comments = false
   hideFooter = false
+
+  # Full-text search tuning (Fuse.js). ignoreLocation makes a match anywhere in a
+  # post count, so a command or tool name buried deep in a walkthrough still
+  # surfaces; without it Fuse only matches near the start of the body.
+  [params.fuseOpts]
+    isCaseSensitive = false
+    shouldSort = true
+    location = 0
+    distance = 1000
+    threshold = 0.3
+    minMatchCharLength = 2
+    ignoreLocation = true
+    keys = ["title", "permalink", "summary", "content"]
 
   [params.cover]
     linkFullImages = true
@@ -66,6 +79,11 @@ theme = "PaperMod"
     name = "Posts"
     url = "/posts/"
     weight = 20
+  [[menu.main]]
+    identifier = "search"
+    name = "Search"
+    url = "/search/"
+    weight = 30
   [[menu.main]]
     identifier = "subscribe"
     name = "Subscribe"

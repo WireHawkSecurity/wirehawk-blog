@@ -26,6 +26,7 @@ The core objective is to demonstrate the full impact of a successful network int
 ## Scope
 
 **Target (Ubuntu):** `10.0.31.54`
+
 **Target (DC):** `10.0.27.56`
 
 ## RustScan (DC)
