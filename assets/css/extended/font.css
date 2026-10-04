@@ -379,6 +379,30 @@ a:hover {
   text-align: right;
 }
 
+/* ── Search ── */
+/* Center the magnifier with the heading text. The theme drops the SVG inline, so
+   it sits on the text baseline and reads high; flex + align-items centers it. The
+   :has() scopes this to the search heading (the only page-header h1 with an icon). */
+.page-header h1:has(svg) {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The theme makes the input bold and full-width, which reads oversized and
+   stretches the field the whole content width on desktop. Normal weight, a 16px
+   field (16px also stops iOS Safari zooming in on focus), a bit more padding, and
+   a width cap so it stays a sensible size on desktop and goes full-width on mobile. */
+.searchbox {
+  max-width: 600px;
+}
+
+.searchbox input {
+  font-weight: 400;
+  font-size: 1rem;
+  padding: 10px 14px;
+}
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   /* Tighten the header band on mobile. PaperMod's 60px desktop header-height is
