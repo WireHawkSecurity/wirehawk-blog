@@ -1,0 +1,14 @@
+{{- /* Give every code block a stable anchor (#code-1, #code-2, …) so search can
+       link straight to the command that matched. Blocks with no language — every
+       walkthrough block, per the style guide — keep Hugo's plain <pre><code>
+       output byte for byte; blocks with a language still go through Chroma. The
+       id lands on the outermost element so PaperMod's copy button logic, which
+       walks up from <code>, sees exactly the structure it did before. */ -}}
+{{- $id := printf "code-%d" (add .Ordinal 1) -}}
+{{- if .Type -}}
+  {{- $r := transform.HighlightCodeBlock . -}}
+  {{- replaceRE `^<div class="highlight"` (printf `<div class="highlight" id="%s"` $id) $r.Wrapped 1 | safeHTML -}}
+{{- else -}}
+<pre tabindex="0" id="{{ $id }}"><code>{{ .Inner }}
+</code></pre>
+{{- end -}}

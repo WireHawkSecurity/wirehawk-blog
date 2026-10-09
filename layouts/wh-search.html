@@ -1,0 +1,184 @@
+{{- define "main" }}
+{{- /* Search page (content/search.md, layout "wh-search").
+       A full-text search over every walkthrough that answers with the commands
+       themselves. Each matching post lists its hits: the code blocks that
+       contain the query first, then any prose sections that mention it. Every
+       hit links to that exact block or section, and the post page highlights
+       the match on arrival (see the landing script in extend_footer.html).
+
+       Backed by Pagefind through assets/js/wh-search.js. The layout is not
+       named "search" on purpose: PaperMod's head.html loads its Fuse.js
+       script and fetches index.json for any page whose layout is "search",
+       and neither is used any more. */ -}}
+
+<header class="page-header">
+  <h1>{{- (printf "%s&nbsp;" .Title) | htmlUnescape -}}
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+  </h1>
+</header>
+
+{{- /* The input keeps PaperMod's .searchbox wrapper so the existing Search
+       block in font.css (600px cap, 16px field) still styles it. Results sit
+       outside it so they use the full content width. */}}
+<div id="searchbox" class="searchbox">
+  <input id="whSearchInput" placeholder="{{ .Params.placeholder | default "Search…" }}" aria-label="Search walkthroughs" aria-describedby="whSearchStatus" type="search" autocomplete="off" spellcheck="false" maxlength="128">
+</div>
+<p id="whSearchStatus" class="wh-search-status" role="status" aria-live="polite"></p>
+<ol id="whSearchResults" class="wh-results" aria-label="Search results"></ol>
+
+{{- $posts := slice }}
+{{- range where site.RegularPages "Section" "posts" }}
+  {{- $thumb := "" }}
+  {{- $p := . }}
+  {{- with .Params.cover }}
+    {{- with $p.Resources.GetMatch (.image | default "no-cover-match") }}
+      {{- /* Same size the Posts library uses, so Hugo processes it once. */}}
+      {{- $thumb = (.Fill "576x324 center webp q80").RelPermalink }}
+    {{- end }}
+  {{- end }}
+  {{- $posts = $posts | append (dict "title" .Title "url" .RelPermalink "thumb" $thumb "difficulty" (.Params.difficulty | default "")) }}
+{{- end }}
+
+{{- $js := resources.Get "js/wh-search.js" | resources.Minify | fingerprint }}
+<script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" crossorigin="anonymous"></script>
+<script>
+(function () {
+  var POSTS = {{ $posts | jsonify | safeJS }};
+  var byUrl = {};
+  POSTS.forEach(function (p) { byUrl[p.url] = p; });
+
+  var input = document.getElementById('whSearchInput');
+  var status = document.getElementById('whSearchStatus');
+  var list = document.getElementById('whSearchResults');
+
+  // Hits shown per post before the rest fold behind "Show N more".
+  var VISIBLE = 4;
+  var token = 0;
+  var timer = null;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function hitItem(h, hidden) {
+    var li = document.createElement('li');
+    li.className = 'wh-hit wh-hit-' + h.kind;
+    if (hidden) li.hidden = true;
+    var a = document.createElement('a');
+    a.href = h.href;
+    a.innerHTML =
+      '<span class="wh-hit-section">' + esc(h.section) + '</span>' +
+      (h.kind === 'code'
+        ? '<code class="wh-hit-snippet">' + h.html + '</code>'
+        : '<span class="wh-hit-snippet">' + h.html + '</span>');
+    li.appendChild(a);
+    return li;
+  }
+
+  function render(q, pages) {
+    list.innerHTML = '';
+    if (!q) { status.textContent = ''; return; }
+    if (!pages.length) {
+      status.textContent = 'No walkthrough mentions “' + q + '”.';
+      return;
+    }
+    var hitCount = pages.reduce(function (n, p) { return n + p.hits.length; }, 0);
+    status.textContent = hitCount + ' match' + (hitCount !== 1 ? 'es' : '') +
+      ' in ' + pages.length + ' walkthrough' + (pages.length !== 1 ? 's' : '');
+
+    pages.forEach(function (p) {
+      var meta = byUrl[p.url] || { title: p.title, url: p.url };
+      var li = document.createElement('li');
+      li.className = 'wh-result';
+
+      var head = document.createElement('a');
+      head.className = 'wh-result-head';
+      head.href = p.best ? p.best.href : p.url;
+      if (meta.thumb) {
+        var img = document.createElement('img');
+        img.src = meta.thumb; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+        img.className = 'wh-result-thumb';
+        head.appendChild(img);
+      }
+      var t = document.createElement('span');
+      t.className = 'wh-result-title';
+      t.textContent = meta.title;
+      head.appendChild(t);
+      var c = document.createElement('span');
+      c.className = 'wh-result-count';
+      c.textContent = p.hits.length + (p.hits.length === 1 ? ' match' : ' matches');
+      head.appendChild(c);
+      li.appendChild(head);
+
+      var hits = document.createElement('ol');
+      hits.className = 'wh-hits';
+      p.hits.forEach(function (h, i) { hits.appendChild(hitItem(h, i >= VISIBLE)); });
+      li.appendChild(hits);
+
+      var extra = p.hits.length - VISIBLE;
+      if (extra > 0) {
+        var more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'wh-hits-more';
+        more.textContent = 'Show ' + extra + ' more';
+        more.addEventListener('click', function () {
+          hits.querySelectorAll('li[hidden]').forEach(function (n) { n.hidden = false; });
+          more.remove();
+        });
+        li.appendChild(more);
+      }
+      list.appendChild(li);
+    });
+  }
+
+  function run(q) {
+    var mine = ++token;
+    q = q.trim();
+    syncUrl(q);
+    if (!q) { render('', []); return; }
+    status.textContent = 'Searching…';
+    WHSearch.search(q).then(function (pages) {
+      if (mine === token) render(q, pages);
+    }).catch(function () {
+      if (mine !== token) return;
+      list.innerHTML = '';
+      {{- /* Readers only see this if pagefind.js fails to load. Under hugo
+             server it means static/pagefind is missing: rebuild it with
+             apply-search-upgrade.ps1 -IndexOnly. */}}
+      status.textContent = 'Search is unavailable right now. Try again in a moment.';
+    });
+  }
+
+  // Keep the query in the address bar so Back from a post returns to the same
+  // results, and so a search can be linked to directly (/search/?q=kinit).
+  function syncUrl(q) {
+    try {
+      var u = new URL(location.href);
+      if (q) u.searchParams.set('q', q); else u.searchParams.delete('q');
+      history.replaceState(null, '', u.pathname + u.search);
+    } catch (e) {}
+  }
+
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    var v = input.value;
+    timer = setTimeout(function () { run(v); }, 150);
+  });
+
+  // Enter goes straight to the best hit of the top result.
+  input.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var first = list.querySelector('.wh-result-head');
+    if (first) { e.preventDefault(); location.href = first.href; }
+  });
+
+  var initial = new URLSearchParams(location.search).get('q');
+  if (initial) { input.value = initial; run(initial); }
+  if (!initial && window.matchMedia && window.matchMedia('(hover: hover)').matches) input.focus();
+  WHSearch.load().catch(function () {});
+})();
+</script>
+
+{{- end }}{{/* end main */}}

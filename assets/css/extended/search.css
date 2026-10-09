@@ -1,0 +1,269 @@
+/* ===================================================================
+   WireHawk Security — Search
+   assets/css/extended/search.css
+
+   The Search page results (layouts/wh-search.html) and the highlight a
+   post shows when it is opened from a search hit (assets/js/wh-landing.js).
+   Tokens from font.css. The search input itself is styled by the Search
+   block in font.css.
+   =================================================================== */
+
+/* ── Status line ── */
+
+.wh-search-status {
+  margin: 0.9rem 0 1rem;
+  font-size: 0.85rem;
+  color: #666666;
+}
+
+.wh-search-status:empty {
+  display: none;
+}
+
+/* ── Results ── */
+
+.wh-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wh-result {
+  background: #151515;
+  border: 1px solid #222222;
+  border-radius: 6px;
+  padding: 0.9rem 1rem 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.wh-result-head {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.9rem;
+  margin-bottom: 0.6rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.wh-result-head:not(:has(img)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.wh-result-thumb {
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  background: #0d0d0d;
+  margin: 0;
+}
+
+.wh-result-title {
+  min-width: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: #e0e0e0;
+  transition: color 0.2s ease;
+}
+
+.wh-result-count {
+  font-size: 0.75rem;
+  color: #888888;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .wh-result-head:hover .wh-result-title {
+    color: var(--wh-red);
+  }
+}
+
+/* ── Hits ── */
+
+.wh-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #1f1f1f;
+}
+
+.wh-hit a {
+  display: block;
+  padding: 0.55rem 0.6rem 0.55rem 0.75rem;
+  border-left: 2px solid transparent;
+  border-bottom: 1px solid #1a1a1a;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wh-hit:last-child a {
+  border-bottom: none;
+}
+
+@media (hover: hover) {
+  .wh-hit a:hover {
+    border-left-color: var(--wh-red);
+    background-color: rgba(var(--wh-red-rgb), 0.04);
+  }
+}
+
+.wh-hit a:focus-visible {
+  outline: none;
+  border-left-color: var(--wh-red);
+  background-color: rgba(var(--wh-red-rgb), 0.06);
+}
+
+.wh-hit-section {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #888888;
+}
+
+/* Command hits read as code: the same mono face and dark well as a post's
+   code blocks, wrapping rather than scrolling so the match is always on
+   screen. */
+.wh-hit-code .wh-hit-snippet {
+  display: block;
+  padding: 0.45rem 0.65rem;
+  background: #0d0d0d;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #c0c0c0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* One token of a command. Kept whole across a wrap; one too long for the
+   line breaks inside instead of pushing the card wider. */
+.wh-hit-code .wh-tok {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.wh-hit-text .wh-hit-snippet {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #888888;
+}
+
+.wh-hit-snippet mark {
+  background: rgba(var(--wh-red-rgb), 0.16);
+  color: var(--wh-red-light);
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
+
+.wh-hits-more {
+  margin: 0.35rem 0 0.2rem 0.75rem;
+  padding: 0.3rem 0.65rem;
+  background: transparent;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  color: #888888;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .wh-hits-more:hover {
+    border-color: var(--wh-red);
+    color: var(--wh-red);
+  }
+}
+
+.wh-hits-more:focus-visible {
+  outline: none;
+  border-color: var(--wh-red);
+  box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.25);
+}
+
+/* ── Landing on a post from a search hit ── */
+
+.post-content mark.wh-hl {
+  background: rgba(var(--wh-red-rgb), 0.3);
+  color: #ffffff;
+  padding: 0 0.1em;
+  border-radius: 2px;
+}
+
+/* The block the hit pointed at: a red ring that pulses once, then settles
+   to the brand border so the reader can still find it after scrolling. */
+.post-content pre.wh-landed {
+  border-color: var(--wh-red);
+  animation: wh-landed 1.6s ease-out 1;
+}
+
+@keyframes wh-landed {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--wh-red-rgb), 0.55); }
+  100% { box-shadow: 0 0 0 10px rgba(var(--wh-red-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-content pre.wh-landed {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.4);
+  }
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 768px) {
+  .wh-result {
+    padding: 0.8rem 0.85rem 0.5rem;
+  }
+
+  .wh-result-head {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .wh-result-head:not(:has(img)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wh-result-thumb {
+    width: 72px;
+  }
+
+  .wh-result-title {
+    font-size: 0.98rem;
+  }
+
+  /* The count drops under the title rather than squeezing it. */
+  .wh-result-count {
+    grid-column: 2;
+  }
+
+  .wh-result-head:not(:has(img)) .wh-result-count {
+    grid-column: 1;
+  }
+
+  .wh-hit a {
+    padding-left: 0.6rem;
+    padding-right: 0.4rem;
+  }
+
+  .wh-hit-code .wh-hit-snippet {
+    font-size: 0.76rem;
+  }
+
+  /* 2.75rem is 44px, the iOS minimum tap target. */
+  .wh-hits-more {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.9rem;
+  }
+}

@@ -180,3 +180,7 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Local search index for hugo server, built by apply-search-upgrade.ps1.
+# GitHub Actions builds its own at deploy.
+/static/pagefind/

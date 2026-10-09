@@ -1,4 +1,6 @@
 {{- if and .IsPage (eq .Section "posts") }}
+{{- $landing := resources.Get "js/wh-landing.js" | resources.Minify | fingerprint }}
+<script src="{{ $landing.RelPermalink }}" integrity="{{ $landing.Data.Integrity }}" crossorigin="anonymous"></script>
 <div class="reading-progress" id="reading-progress"></div>
 <div class="lightbox-overlay" id="lightbox-overlay" role="dialog" aria-label="Image preview" aria-hidden="true">
   <img id="lightbox-img" src="" alt="">
@@ -143,4 +145,12 @@
 window.addEventListener('pageshow', function (e) {
   if (e.persisted) window.scrollTo(0, 0);
 });
+</script>
+<script>
+// PaperMod gives the Search menu link its Alt+/ shortcut only when the search
+// page's layout is named "search". Ours is "wh-search", so it is added here.
+(function () {
+  var a = document.querySelector('#menu a[href$="/search/"]');
+  if (a) { a.setAttribute('accesskey', '/'); a.title = 'Search (Alt + /)'; }
+})();
 </script>

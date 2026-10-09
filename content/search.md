@@ -1,9 +1,8 @@
 ---
 title: "Search"
-layout: "search"
+layout: "wh-search"
 summary: "Search every walkthrough by tool, command, or technique."
 placeholder: "Search tools, commands, techniques…"
-ShowBreadCrumbs: false
-ShowReadingTime: false
-hideMeta: true
+build:
+  list: never
 ---
