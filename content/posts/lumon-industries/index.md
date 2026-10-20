@@ -686,7 +686,7 @@ Session completed.
 Cracked, though much slower than the NTLMv2 hashes, because DCC2 is deliberately expensive to compute. With `hellye`'s password, we log in to the domain controller over RDP.
 
 ```
-xfreerdp3 /v:10.1.179.113 /d:lumon.hacksmarter /u:hellye /p:'Security&system' /cert:ignore /dynamic-resolution +clipboard
+xfreerdp3 /v:10.1.179.113 /d:lumons.hacksmarter /u:hellye /p:'Security&system' /cert:ignore /dynamic-resolution +clipboard
 ```
 
 ![RDP session on DC01 as hellye](images/root-flag.png)
