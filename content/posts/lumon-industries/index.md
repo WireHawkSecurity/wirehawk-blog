@@ -34,6 +34,7 @@ hellyr:H3lenaR!2025
 ## Scope
 
 **Target (DC01):** `10.1.179.113`
+
 **Target (Intranet):** `10.1.230.230`
 
 ## RustScan (DC01)
