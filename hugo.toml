@@ -76,11 +76,6 @@ theme = "PaperMod"
     name = "Subscribe"
     url = "/subscribe/"
     weight = 45
-  [[menu.main]]
-    identifier = "about"
-    name = "About"
-    url = "/about/"
-    weight = 50
 
 [markup]
   [markup.highlight]
