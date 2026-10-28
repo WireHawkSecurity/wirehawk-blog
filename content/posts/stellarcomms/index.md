@@ -211,7 +211,7 @@ In BloodHound, `junior.analyst` holds `WriteOwner` over the `STELLAROPS-CONTROL`
 
 *BloodHound WriteOwner: junior.analyst over STELLAROPS-CONTROL*
 
-`STELLAROPS-CONTROL` in turn holds `ForceChangePassword` over `ops.controller`, so membership in the group is the way in.
+`STELLAROPS-CONTROL` in turn holds `ForceChangePassword` over `ops.controller`, so joining the group lets us reset that account's password.
 
 ![BloodHound ForceChangePassword](images/bloodhound-forcechangepassword.png)
 
@@ -557,7 +557,7 @@ In BloodHound, `eng.payload` holds `ReadGMSAPassword` over `SATLINK-SERVICE$`.
 
 *BloodHound ReadGMSAPassword: eng.payload over SATLINK-SERVICE$*
 
-`SATLINK-SERVICE$` is a group Managed Service Account (gMSA), whose password the domain generates and rotates on its own. Only the principals allowed to retrieve it can read that password from the account's `msDS-ManagedPassword` attribute. The [NetExec wiki](https://www.netexec.wiki/) documents `--gmsa`, which reads the attribute as `eng.payload` and derives the NT hash from it.
+`SATLINK-SERVICE$` is a gMSA (group Managed Service Account), whose password the domain generates and rotates on its own. Only the principals allowed to retrieve it can read that password from the account's `msDS-ManagedPassword` attribute. The [NetExec wiki](https://www.netexec.wiki/) documents `--gmsa`, which reads the attribute as `eng.payload` and derives the NT hash from it.
 
 ```
 nxc ldap 10.1.117.162 -u 'eng.payload' -p '0xB1rdWasHere1337!' --gmsa
@@ -637,7 +637,7 @@ SATLINK-SERVICE$:des-cbc-md5:54947625b6436b76
 
 *impacket-secretsdump replicating every domain hash over DRSUAPI as SATLINK-SERVICE$*
 
-secretsdump's remote registry step fails because it needs local admin, but replication does not, so every account's hash comes back. `krbtgt`'s key encrypts every TGT the domain issues, so its hash lets us forge a ticket for any account.
+secretsdump's remote registry step fails because it needs local admin, but replication does not, so every account's hash comes back.
 
 ## Shell as Administrator (root.txt)
 
