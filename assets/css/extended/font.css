@@ -305,6 +305,12 @@ a:hover {
   color: #888888;
 }
 
+/* Badge row above the date line. The badges themselves are styled by the
+   .library-badge rules in library.css, so they match the Posts library. */
+.entry-badges {
+  margin-bottom: 0.45rem;
+}
+
 /* ── Homepage "Latest Posts" section header ── */
 .latest-header {
   display: flex;

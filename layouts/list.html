@@ -95,6 +95,20 @@
   {{- end }}
   {{- if not (.Param "hideMeta") }}
   <footer class="entry-footer">
+    {{- /* Same badges, order, and classes as the Posts library cards (layouts/posts/list.html): platforms, then tags, then difficulty. */ -}}
+    {{- if or .Params.platforms .Params.tags .Params.difficulty }}
+    <div class="library-post-badges entry-badges">
+      {{- range .Params.platforms }}
+      <span class="library-badge library-badge-platform">{{ . }}</span>
+      {{- end }}
+      {{- range .Params.tags }}
+      <span class="library-badge {{ if eq . "Resources" }}library-badge-resource{{ else }}library-badge-tag{{ end }}">{{ . }}</span>
+      {{- end }}
+      {{- with .Params.difficulty }}
+      <span class="library-badge library-badge-{{ lower . }}">{{ . }}</span>
+      {{- end }}
+    </div>
+    {{- end }}
     {{- partial "post_meta.html" . -}}
   </footer>
   {{- end }}
