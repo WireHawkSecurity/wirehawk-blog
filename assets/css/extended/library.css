@@ -725,6 +725,69 @@
   }
 }
 
+/* ── Mobile card rhythm ──
+   With the title alone beside the 96px thumbnail, a block of empty space sat
+   under it and the date dangled on a line of its own at the foot of the card.
+   The meta wrapper drops out of the box tree so its two children take grid
+   cells directly: title and date stack beside the thumbnail and centre
+   against it, then the summary and badges run full width. The intro spacing
+   tightens to one 12px step between controls so the first card starts higher. */
+@media (max-width: 768px) {
+  .main:has(#library-app) .page-header {
+    margin-bottom: 20px;
+  }
+
+  #library-app > .library-search-wrap {
+    margin-bottom: 0.75rem;
+  }
+
+  .library-results-header {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .library-post-card {
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "thumb title"
+      "thumb date"
+      "summary summary"
+      "badges badges";
+    row-gap: 0;
+  }
+
+  .library-post-thumb {
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  .library-post-title {
+    align-self: end;
+    margin-bottom: 0.2rem;
+  }
+
+  .library-post-meta {
+    display: contents;
+  }
+
+  .library-post-date {
+    grid-area: date;
+    align-self: start;
+    width: auto;
+    margin: 0;
+  }
+
+  .library-post-summary {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .library-post-badges {
+    grid-area: badges;
+  }
+}
+
 /* ── Small phones ── */
 @media (max-width: 480px) {
   .library-filter-trigger {
