@@ -1,5 +1,5 @@
 ---
-title: "StellarComms 🛰️ | Hack Smarter Labs"
+title: "StellarComms 🛰️"
 date: 2026-10-27
 summary: "A medium-difficulty Active Directory lab where a default password from an anonymous FTP share opens a chain of WriteOwner, ForceChangePassword, and WriteDacl abuse, a saved Firefox login decrypts to another user, and ReadGMSAPassword yields a service account with DCSync over the domain."
 platforms: ["Hack Smarter Labs"]

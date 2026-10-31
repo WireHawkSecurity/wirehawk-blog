@@ -1,5 +1,5 @@
 ---
-title: "ShadowGate2 ⛩️ | Hack Smarter Labs"
+title: "ShadowGate2 ⛩️"
 date: 2026-08-02
 summary: "A medium-difficulty Active Directory lab chaining a SQL injection auth bypass, an NTLMv2 capture through a file-upload portal, a WriteOwner and GenericAll ACL chain, a deleted-account recovery, and ESC3 enrollment-agent abuse to enroll as Administrator."
 platforms: ["Hack Smarter Labs"]

@@ -1,5 +1,5 @@
 ---
-title: "Dark 🌚 | Hack Smarter Labs"
+title: "Dark 🌚"
 date: 2026-08-10
 summary: "An easy-difficulty Linux lab chaining a vulnerable WordPress plugin, an unauthenticated privilege escalation to admin, a malicious plugin upload for a foothold, and a Docker group misconfiguration to reach root."
 platforms: ["Hack Smarter Labs"]

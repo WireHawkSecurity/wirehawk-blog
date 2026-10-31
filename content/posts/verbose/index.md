@@ -1,5 +1,5 @@
 ---
-title: "Verbose 📢 | Hack Smarter Labs"
+title: "Verbose 📢"
 date: 2026-06-28
 summary: "An easy-difficulty web application lab chaining a verbose API credential leak, MFA bypass, and Jinja2 SSTI through image metadata injection to achieve root access."
 platforms: ["Hack Smarter Labs"]

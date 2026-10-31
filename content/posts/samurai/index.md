@@ -1,5 +1,5 @@
 ---
-title: "Samurai 🥋 | Hack Smarter Labs"
+title: "Samurai 🥋"
 date: 2026-09-08
 summary: "An easy-difficulty Linux lab chaining a Joomla configuration disclosure, a database password reused on the Super User account, a template file edit for a foothold, and command injection through a sudo-invoked backup binary to reach root."
 platforms: ["Hack Smarter Labs"]

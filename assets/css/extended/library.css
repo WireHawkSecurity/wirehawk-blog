@@ -476,6 +476,37 @@
   }
 }
 
+/* ── Desktop grid ──
+   Above the mobile breakpoint the results sit two to a row. The 720px column
+   is too narrow for a 288px thumbnail beside the text at half width, so each
+   card stacks: machine card on top, then title, summary, and meta. The summary
+   row takes the slack so the meta row lines up across a row of cards. Mobile
+   keeps the compact single-column card defined below. */
+@media (min-width: 769px) {
+  #postList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  #postList .library-post-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      "thumb"
+      "title"
+      "summary"
+      "meta";
+    margin-bottom: 0;
+    padding: 1rem;
+  }
+
+  #postList .library-post-thumb {
+    width: 100%;
+    margin-bottom: 0.9rem;
+  }
+}
+
 /* ── Pagination ── */
 /* Client-side pager for the filtered result set. Borders use the #333333 UI
    chrome tier (like the nav and Clear button), the current page uses the red

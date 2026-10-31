@@ -1,5 +1,5 @@
 ---
-title: "Sysco 📡 | Hack Smarter Labs"
+title: "Sysco 📡"
 date: 2026-10-08
 summary: "A medium-difficulty Active Directory lab where usernames built from a company team page lead to an AS-REP Roast, a Cisco enable secret in webmail and a password saved in a PuTTY shortcut both open domain accounts, and GenericAll over Default Domain Policy lets us push a scheduled task that makes a user an administrator on the domain controller."
 platforms: ["Hack Smarter Labs"]

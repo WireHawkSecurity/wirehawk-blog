@@ -1,5 +1,5 @@
 ---
-title: "Welcome 👋 | Hack Smarter Labs"
+title: "Welcome 👋"
 date: 2026-07-05
 summary: "An easy-difficulty Active Directory lab chaining SMB share enumeration, PDF cracking, password spraying, GenericAll and ForceChangePassword ACL abuse, and ESC1 certificate exploitation for full domain compromise."
 platforms: ["Hack Smarter Labs"]

@@ -1,5 +1,5 @@
 ---
-title: "Arasaka 🗼 | Hack Smarter Labs"
+title: "Arasaka 🗼"
 date: 2026-07-22
 summary: "An easy-difficulty Active Directory lab chaining Kerberoasting, a GenericAll and GenericWrite ACL chain, and ESC1 certificate abuse against an expired admin to reach a live Domain Administrator and dump NTDS."
 platforms: ["Hack Smarter Labs"]

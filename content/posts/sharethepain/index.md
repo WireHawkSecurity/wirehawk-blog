@@ -1,5 +1,5 @@
 ---
-title: "ShareThePain 🤕 | Hack Smarter Labs"
+title: "ShareThePain 🤕"
 date: 2026-09-10
 summary: "A medium-difficulty Active Directory lab where a null SMB session with write access to a share captures a user hash through ntlm_theft, GenericAll over a second account resets its password to a WinRM shell, and a loopback-bound SQL Server instance reached through a Ligolo-ng tunnel gives up xp_cmdshell execution whose SeImpersonatePrivilege escalates to SYSTEM on the domain controller."
 platforms: ["Hack Smarter Labs"]

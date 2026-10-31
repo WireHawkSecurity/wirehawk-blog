@@ -1,5 +1,5 @@
 ---
-title: "Lumon Industries 💡 | Hack Smarter Labs"
+title: "Lumon Industries 💡"
 date: 2026-10-17
 summary: "A medium-difficulty Active Directory lab where ntlm_theft files on a writable intranet share and a UNC path fed to an admin portal's file browser capture two crackable hashes, ForceChangePassword over a LAPS reader exposes the intranet server's local administrator password, and a cached Domain Admin logon dumped from that server cracks to RDP on the domain controller."
 platforms: ["Hack Smarter Labs"]

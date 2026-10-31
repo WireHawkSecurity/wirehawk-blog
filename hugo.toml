@@ -2,6 +2,7 @@ baseURL = "https://blog.wirehawksecurity.com/"
 locale = "en-us"
 title = "WireHawk Security | Blog"
 theme = "PaperMod"
+enableRobotsTXT = true
 
 [pagination]
   pagerSize = 10

@@ -1,5 +1,5 @@
 ---
-title: "404 Bank 🏦 | Hack Smarter Labs"
+title: "404 Bank 🏦"
 date: 2026-09-01
 summary: "A medium-difficulty Active Directory lab where a password hash hardcoded in a downloadable client binary opens a chain of password resets, a Ligolo-ng tunnel reaches an internal admin portal, and write access over a certificate template turns ESC4 into ESC1 for a domain administrator certificate."
 platforms: ["Hack Smarter Labs"]

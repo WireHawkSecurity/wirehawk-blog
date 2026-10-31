@@ -1,5 +1,5 @@
 ---
-title: "ShadowGate 🏯 | Hack Smarter Labs"
+title: "ShadowGate 🏯"
 date: 2026-06-15
 summary: "An easy-difficulty Active Directory lab chaining anonymous SMB enumeration, AS-REP Roasting, Targeted Kerberoasting, and ESC8 NTLM relay to extract the krbtgt hash for full domain compromise."
 platforms: ["Hack Smarter Labs"]

@@ -1,7 +1,7 @@
 ---
-title: "Anomaly 🛸 | Hack Smarter Labs"
-date: 2026-10-02
-summary: "A medium-difficulty Active Directory lab where a Jenkins script console and a sudo binary injection give root on a domain-joined Ubuntu server, a readable Kerberos keytab and a password in an AD description field pivot into the domain, and an ESC1 template abused through a created machine account resets a Domain Admin's password over Schannel when PKINIT is unavailable."
+title: "Anomaly 🛸"
+date: 2026-10-03
+summary: "A medium-difficulty Active Directory lab where a Jenkins script console and a sudo binary injection give root on a domain-joined Ubuntu server, a readable Kerberos keytab and a password in an AD description field pivot into the domain, and an ESC1 template abused through a created machine account resets a Domain Admin's password over Schannel when the KDC rejects PKINIT."
 platforms: ["Hack Smarter Labs"]
 tags: ["Active Directory"]
 difficulty: "Medium"
@@ -664,7 +664,7 @@ certipy-ad auth -pfx 'anna_molly.pfx' -dc-ip '10.0.27.56'
 
 *Certipy's PKINIT request rejected by the KDC with KDC_ERR_PADATA_TYPE_NOSUPP*
 
-`KDC_ERR_PADATA_TYPE_NOSUPP` means the DC is not serving PKINIT, so the Kerberos path to a ticket is closed. The certificate is still valid, so we present it over Schannel instead, the TLS channel LDAP exposes, which never touches the KDC. `-ldap-shell` authenticates the certificate to LDAP and drops us into a shell as `anna_molly`, where we reset her password to one we know.
+`KDC_ERR_PADATA_TYPE_NOSUPP` is the KDC refusing the PKINIT request, so the Kerberos path to a ticket is closed. The certificate is still valid, so we present it over Schannel instead, the TLS channel LDAP exposes, which never touches the KDC. `-ldap-shell` authenticates the certificate to LDAP and drops us into a shell as `anna_molly`, where we reset her password to one we know.
 
 ```
 certipy-ad auth -pfx 'anna_molly.pfx' -dc-ip '10.0.27.56' -ldap-shell
@@ -720,8 +720,8 @@ anomaly\anna_molly
 
 ## Final Thoughts
 
-I tried to get an NT hash out of the keytab and came up empty, so I used it with `kinit` to request a ticket instead, no password needed. On the AD CS side, PKINIT wasn't available on the domain controller, so I used the certificate over Schannel and reset `anna_molly`'s password.
+I tried to get an NT hash out of the keytab and came up empty, so I used it with `kinit` to request a ticket instead, no password needed. On the AD CS side, the KDC rejected the PKINIT request, so I used the certificate over Schannel and reset `anna_molly`'s password.
 
-Jenkins shipped with `admin:admin`, and its script console is code execution for anyone who logs in, so the default login should have been changed at setup. A program you can run through sudo should never drop user input straight into a shell command; build the command without a shell, or escape the argument first. A keytab is a credential file and does not belong world-readable on a domain-joined host. A template with Enrollee Supplies Subject enabled turns one account's enrollment rights into a certificate for any account in the domain.
+Jenkins shipped with `admin:admin`, and its script console is code execution for anyone who logs in, so the default login should have been changed at setup. A program you can run through sudo should never drop user input straight into a shell command. Build the command without a shell, or escape the argument first. A keytab is a credential file and should not be world-readable on a domain-joined host. A template with Enrollee Supplies Subject enabled turns one account's enrollment rights into a certificate for any account in the domain.
 
 — 0xB1rd

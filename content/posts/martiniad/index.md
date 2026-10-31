@@ -1,5 +1,5 @@
 ---
-title: "MartiniAD 🍸 | Hack Smarter Labs"
+title: "MartiniAD 🍸"
 date: 2026-07-23
 summary: "An easy-difficulty Active Directory lab chaining anonymous SMB access, plaintext credentials left on an open share, Kerberoasting, and password reuse on a tier 0 admin account to dump NTDS and recover the krbtgt hash."
 platforms: ["Hack Smarter Labs"]

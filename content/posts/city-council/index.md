@@ -1,5 +1,5 @@
 ---
-title: "City Council 🏛️ | Hack Smarter Labs"
+title: "City Council 🏛️"
 date: 2026-08-19
 summary: "A medium-difficulty Active Directory lab where a desktop portal leaks a service account credential over the network, Kerberoasting and an NTLM capture chain through four users, DPAPI recovers a stored helpdesk password, and WriteDacl and GenericWrite move a quarantined account into an OU we control for an ASPX shell and SeImpersonatePrivilege escalation to SYSTEM."
 platforms: ["Hack Smarter Labs"]

@@ -61,7 +61,15 @@
   ];
 
   var activeFilters = { platform: [], tag: [], diff: [], type: [] };
-  var PAGE_SIZE = 5;
+  // Two-column grid on desktop shows a full 2x2 page; phones keep five stacked.
+  // Matches the 769px breakpoint in library.css.
+  var desktopQuery = window.matchMedia('(min-width: 769px)');
+  var PAGE_SIZE = desktopQuery.matches ? 4 : 5;
+  desktopQuery.addEventListener('change', function (e) {
+    PAGE_SIZE = e.matches ? 4 : 5;
+    currentPage = 1;
+    renderPosts();
+  });
   var currentPage = 1;
 
   // "Resources" is a content TYPE, not a topical tag. It still lives in each

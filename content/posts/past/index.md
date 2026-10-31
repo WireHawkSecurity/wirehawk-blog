@@ -1,5 +1,5 @@
 ---
-title: "Past 🕰️ | Hack Smarter Labs"
+title: "Past 🕰️"
 date: 2026-08-14
 summary: "A medium-difficulty Active Directory lab where a guest SMB session leads to Kerberoasting without pre-authentication, a weak password on a pre-staged computer account, and a GenericAll edge over the domain controller abused through resource-based constrained delegation to take the domain."
 platforms: ["Hack Smarter Labs"]

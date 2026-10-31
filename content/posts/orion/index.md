@@ -1,5 +1,5 @@
 ---
-title: "Orion 🌌 | Hack Smarter Labs"
+title: "Orion 🌌"
 date: 2026-10-29
 summary: "An easy-difficulty Active Directory lab where a NetExec slinky shortcut on a Guest-writable share captures a crackable hash, Kerberoasting and ForceChangePassword lead to GenericWrite abused with Shadow Credentials, PowerShell history and a script on an IT share give up two more credentials, and an ESC1 template issues a certificate as the domain Administrator."
 platforms: ["Hack Smarter Labs"]
