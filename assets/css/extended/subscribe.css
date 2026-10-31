@@ -298,3 +298,18 @@
     max-width: none;
   }
 }
+
+/* ── Desktop width ──
+   Matches the Posts, Search, and homepage layouts: on wide screens the page
+   breaks out of the 720px reading column to the 1024px nav width so the title
+   shares its left edge with the site logo, while the subscribe content keeps
+   the 720px reading width. */
+@media (min-width: 1100px) {
+  .main:has(.subscribe-page) {
+    max-width: calc(var(--nav-width) + var(--gap) * 2);
+  }
+
+  .subscribe-page {
+    max-width: var(--main-width);
+  }
+}

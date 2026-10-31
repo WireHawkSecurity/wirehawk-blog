@@ -267,3 +267,16 @@
     padding: 0.5rem 0.9rem;
   }
 }
+
+/* ── Desktop width ──
+   Matches the Posts library: on wide screens the page breaks out of the 720px
+   reading column to the 1024px nav width and shares its left edge with the
+   site logo. The search field stays at 720px (the .searchbox cap in
+   font.css), and the results, which are mostly code blocks, take the full
+   width so long commands wrap less. Results stay a single column so they read
+   in relevance order. */
+@media (min-width: 1100px) {
+  .main:has(#whSearchResults) {
+    max-width: calc(var(--nav-width) + var(--gap) * 2);
+  }
+}

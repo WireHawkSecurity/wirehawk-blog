@@ -43,7 +43,7 @@
 {{- if .IsHome }}
 {{- $pages = where site.RegularPages "Type" "in" site.Params.mainSections }}
 {{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true"  }}
-{{- $pages = first 3 $pages }}
+{{- $pages = first 6 $pages }}
 {{- end }}
 
 {{- $paginator := .Paginate $pages }}
@@ -60,6 +60,7 @@
 {{- end }}
 
 {{- $term := .Data.Term }}
+{{- if .IsHome }}<div class="latest-grid">{{- end }}
 {{- range $index, $page := $paginator.Pages }}
 
 {{- $class := "post-entry" }}
@@ -90,7 +91,19 @@
   </header>
   {{- if (ne (.Param "hideSummary") true) }}
   <div class="entry-content">
-    <p>{{ .Summary | plainify | htmlUnescape }}{{ if .Truncated }}...{{ end }}</p>
+    {{- /* On the homepage the card drops the summary's fixed opening clause
+           ("A medium-difficulty Active Directory lab where ..."), which the
+           badges already state, exactly as the Posts library cards do
+           (cardSummary in layouts/posts/list.html). The first word is
+           capitalised unless it is a tool name like ntlm_theft. */}}
+    {{- $sum := .Summary | plainify | htmlUnescape }}
+    {{- if $.IsHome }}
+    {{- $trimmed := replaceRE `^An? (?:easy|medium|hard)-difficulty [^.]*? lab (?:where|chaining) ` "" $sum }}
+    {{- if ne $trimmed $sum }}
+    {{- $sum = cond (findRE `^[a-z]+[_.0-9]` $trimmed | len | eq 0) (strings.FirstUpper $trimmed) $trimmed }}
+    {{- end }}
+    {{- end }}
+    <p>{{ $sum }}{{ if .Truncated }}...{{ end }}</p>
   </div>
   {{- end }}
   {{- if not (.Param "hideMeta") }}
@@ -109,12 +122,20 @@
       {{- end }}
     </div>
     {{- end }}
+    {{- /* Homepage cards use the Posts library's date line (date and reading
+           time) so the two card styles match; other listings keep PaperMod's
+           post_meta. */}}
+    {{- if $.IsHome }}
+    <span class="entry-date">{{ .Date | time.Format ":date_long" }}&nbsp;·&nbsp;{{ .ReadingTime }}&nbsp;min</span>
+    {{- else }}
     {{- partial "post_meta.html" . -}}
+    {{- end }}
   </footer>
   {{- end }}
   <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
 </article>
 {{- end }}
+{{- if .IsHome }}</div>{{- end }}
 
 {{- if gt $paginator.TotalPages 1 }}
 <footer class="page-footer">
@@ -139,6 +160,50 @@
 </footer>
 {{- end }}
 
+{{- if .IsHome }}
+<script>
+/* Trims each homepage card summary to the last whole word that fits its
+   clamped line count, dropping trailing connectives before the ellipsis.
+   Same logic as fitSummary in layouts/posts/list.html; the CSS clamp stays
+   as the fallback. */
+(function () {
+  var weak = /^(a|an|the|to|of|in|on|for|with|through|and|or|its|by|from|into|over|as|at|that|which)$/i;
+  function fit(el) {
+    var full = el.getAttribute('data-full');
+    if (full === null) { full = el.textContent; el.setAttribute('data-full', full); }
+    var cs = getComputedStyle(el);
+    var lines = parseInt(cs.webkitLineClamp || cs.getPropertyValue('line-clamp'), 10);
+    var lh = parseFloat(cs.lineHeight);
+    if (!lines || !lh) return;
+    var maxH = lines * lh + 1;
+    el.style.display = 'block';
+    el.style.webkitLineClamp = 'unset';
+    el.textContent = full;
+    if (el.scrollHeight > maxH) {
+      var words = full.split(' ');
+      var cut = function (n) {
+        var w = words.slice(0, n);
+        while (w.length > 1 && weak.test(w[w.length - 1].replace(/[,;:.]+$/, ''))) w.pop();
+        return w.join(' ').replace(/[\s,;:.]+$/, '') + '\u2026';
+      };
+      var lo = 1, hi = words.length - 1;
+      while (lo < hi) {
+        var mid = Math.ceil((lo + hi) / 2);
+        el.textContent = cut(mid);
+        if (el.scrollHeight <= maxH) lo = mid; else hi = mid - 1;
+      }
+      el.textContent = cut(lo);
+    }
+    el.style.display = '';
+    el.style.webkitLineClamp = '';
+  }
+  function fitAll() { document.querySelectorAll('.latest-grid .entry-content p').forEach(fit); }
+  fitAll();
+  var t;
+  window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fitAll, 150); });
+})();
+</script>
+{{- end }}
 {{- end }}{{/* end profileMode */}}
 
 {{- end }}{{- /* end main */ -}}

@@ -41,9 +41,11 @@
     {{- range $i, $p := $pages }}
     {{- if $i }},{{ end }}
     {{- $cover := "" }}
+    {{- $cover2x := "" }}
     {{- with $p.Params.cover }}
     {{- with $p.Resources.GetMatch (.image | default "no-cover-match") }}
     {{- $cover = (.Fill "576x324 center webp q80").RelPermalink }}
+    {{- $cover2x = (.Fill "1152x648 center webp q75").RelPermalink }}
     {{- end }}
     {{- end }}
     {
@@ -51,6 +53,7 @@
       "summary": {{ with $p.Params.summary }}{{ . | jsonify | safeJS }}{{ else }}{{ $p.Summary | plainify | htmlUnescape | jsonify | safeJS }}{{ end }},
       "permalink": {{ $p.RelPermalink | jsonify | safeJS }},
       "cover": {{ $cover | jsonify | safeJS }},
+      "cover2x": {{ $cover2x | jsonify | safeJS }},
       "date": {{ $p.Date.Format "January 2, 2006" | jsonify | safeJS }},
       "readingTime": {{ $p.ReadingTime }},
       "platforms": {{ $p.Params.platforms | default slice | jsonify | safeJS }},
@@ -507,6 +510,12 @@
         thumbWrap.className = 'library-post-thumb';
         var thumb = document.createElement('img');
         thumb.src = post.cover;
+        // The mobile card shows the machine card at full phone width, about
+        // 360px, so a 3x screen needs the 1152px rendition to stay sharp.
+        if (post.cover2x) {
+          thumb.srcset = post.cover + ' 576w, ' + post.cover2x + ' 1152w';
+          thumb.sizes = '(max-width: 768px) calc(100vw - 2rem), (max-width: 1099px) 288px, 208px';
+        }
         thumb.alt = '';
         thumb.loading = 'lazy';
         thumb.decoding = 'async';

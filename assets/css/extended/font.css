@@ -340,6 +340,141 @@ a:hover {
   color: var(--wh-red);
 }
 
+/* ── Homepage latest-posts grid ──
+   The homepage shows the six latest posts in the same tiles as the Posts
+   library (library.css, "Desktop grid"). On wide screens the page breaks out of
+   the 720px reading column to the 1024px nav width, sharing its left edge with
+   the logo, and the cards sit two across in three rows: a 208px machine card on
+   the left with the title and summary beside it, badges and date along the
+   bottom. The intro keeps the reading width. On phones the machine card runs
+   edge to edge across the top of the card, as in the library. Tablets keep the
+   horizontal card. */
+.entry-date {
+  white-space: nowrap;
+}
+
+@media (min-width: 1100px) {
+  .main:has(.latest-grid) {
+    max-width: calc(var(--nav-width) + var(--gap) * 2);
+  }
+
+  .main:has(.latest-grid) .home-info {
+    max-width: var(--main-width);
+  }
+
+  .latest-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .latest-grid .post-entry {
+    grid-template-columns: 208px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "thumb header"
+      "thumb content"
+      "footer footer";
+    column-gap: 0.9rem;
+    padding: 1rem;
+    margin-bottom: 0;
+  }
+
+  .latest-grid .post-entry .entry-cover {
+    width: 208px;
+  }
+
+  .latest-grid .entry-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .latest-grid .entry-content {
+    margin-top: 0.35rem;
+  }
+
+  .latest-grid .entry-content p {
+    align-self: start;
+    font-size: 0.88rem;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    text-wrap: pretty;
+  }
+
+  /* Badges left, date right, on one line under both columns. */
+  .latest-grid .entry-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+  }
+
+  .latest-grid .post-entry .entry-badges {
+    margin-bottom: 0;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  .latest-grid .post-entry .library-badge {
+    padding: 0.2rem 0.45rem;
+  }
+
+  .latest-grid .entry-date {
+    font-size: 0.7rem;
+    color: #808080;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Date under the title and badges last, matching the library's mobile
+     card. The footer drops out of the box tree so its two children take grid
+     cells directly. */
+  .latest-grid .post-entry {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "thumb"
+      "header"
+      "date"
+      "content"
+      "badges";
+    overflow: hidden;
+    padding: 0 1.1rem 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .latest-grid .post-entry .entry-cover {
+    width: auto;
+    margin: 0 -1.1rem 0.95rem;
+    border: 0;
+    border-bottom: 1px solid #222222;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .latest-grid .entry-header h2 {
+    font-size: 1.08rem;
+  }
+
+  .latest-grid .entry-content {
+    margin: 0 0 0.85rem;
+  }
+
+  .latest-grid .entry-footer {
+    display: contents;
+  }
+
+  .latest-grid .entry-date {
+    grid-area: date;
+    font-size: 0.7rem;
+    color: #808080;
+    margin: 0.2rem 0 0.6rem;
+  }
+
+  .latest-grid .post-entry .entry-badges {
+    grid-area: badges;
+    margin-bottom: 0;
+  }
+}
+
 /* ── Post Navigation ── */
 .paginav {
   border: none;

@@ -725,13 +725,13 @@
   }
 }
 
-/* ── Mobile card rhythm ──
-   With the title alone beside the 96px thumbnail, a block of empty space sat
-   under it and the date dangled on a line of its own at the foot of the card.
-   The meta wrapper drops out of the box tree so its two children take grid
-   cells directly: title and date stack beside the thumbnail and centre
-   against it, then the summary and badges run full width. The intro spacing
-   tightens to one 12px step between controls so the first card starts higher. */
+/* ── Mobile card ──
+   On phones the machine card runs edge to edge across the top of the card,
+   with title, date, summary, and badges stacked beneath it. A 96px thumbnail
+   beside the title left the art too small to read and the text wrapping
+   around it. The meta wrapper drops out of the box tree so the date can sit
+   directly under the title, ahead of the summary. The intro spacing tightens
+   to one 12px step between controls. */
 @media (max-width: 768px) {
   .main:has(#library-app) .page-header {
     margin-bottom: 20px;
@@ -748,22 +748,30 @@
   }
 
   .library-post-card {
-    grid-template-rows: auto auto auto auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
     grid-template-areas:
-      "thumb title"
-      "thumb date"
-      "summary summary"
-      "badges badges";
+      "thumb"
+      "title"
+      "date"
+      "summary"
+      "badges";
     row-gap: 0;
+    overflow: hidden;
+    padding: 1rem 1.1rem 1.1rem;
+    margin-bottom: 1rem;
   }
 
   .library-post-thumb {
-    grid-row: 1 / 3;
-    align-self: center;
+    width: auto;
+    margin: -1rem -1.1rem 0.95rem;
+    border: 0;
+    border-bottom: 1px solid #222222;
+    border-radius: 5px 5px 0 0;
   }
 
   .library-post-title {
-    align-self: end;
+    font-size: 1.08rem;
     margin-bottom: 0.2rem;
   }
 
@@ -773,14 +781,12 @@
 
   .library-post-date {
     grid-area: date;
-    align-self: start;
     width: auto;
-    margin: 0;
+    margin: 0 0 0.6rem;
   }
 
   .library-post-summary {
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin: 0 0 0.85rem;
   }
 
   .library-post-badges {
