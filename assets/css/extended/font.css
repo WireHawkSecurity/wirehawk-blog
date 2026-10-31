@@ -459,16 +459,17 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-  /* Matches the library's mobile card: a 124px cover top-left with the title
-     and date beside it, summary and badges full width beneath. The footer
-     drops out of the box tree so its two children take grid cells directly. */
+  /* Matches the library's mobile card: the cover top-left, title, date, and
+     a two-line summary in one column beside it, badges full width beneath.
+     The footer drops out of the box tree so its two children take grid cells
+     directly. */
   .latest-grid .post-entry {
-    grid-template-columns: 124px minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    grid-template-columns: var(--wh-mthumb) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
     grid-template-areas:
       "thumb header"
       "thumb date"
-      "content content"
+      "thumb content"
       "badges badges";
     column-gap: 0.85rem;
     row-gap: 0;
@@ -477,14 +478,16 @@ a:hover {
   }
 
   .latest-grid .post-entry .entry-cover {
-    width: 124px;
+    grid-row: 1 / 4;
+    width: var(--wh-mthumb);
     align-self: start;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.85rem;
     border-radius: 5px;
   }
 
   .latest-grid .entry-header {
-    align-self: end;
+    align-self: start;
+    margin: -0.1rem 0 0.1rem;
   }
 
   .latest-grid .entry-header h2 {
@@ -492,7 +495,12 @@ a:hover {
   }
 
   .latest-grid .entry-content {
-    margin: 0 0 0.7rem;
+    margin: 0 0 0.85rem;
+  }
+
+  .latest-grid .entry-content p {
+    font-size: 0.78rem;
+    line-height: 1.45;
   }
 
   .latest-grid .entry-footer {
@@ -504,7 +512,7 @@ a:hover {
     align-self: start;
     font-size: 0.7rem;
     color: #808080;
-    margin: 0.15rem 0 0;
+    margin: 0 0 0.3rem;
   }
 
   .latest-grid .post-entry .entry-badges {

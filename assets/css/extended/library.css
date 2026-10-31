@@ -731,15 +731,26 @@
 }
 
 /* ── Mobile card ──
-   On phones a 124px machine card sits top-left with the title and date beside
-   it, and the summary and badges run full width beneath. That halves the card
-   to about 184px, so roughly four fit on a screen; the edge-to-edge cover ran
-   367px and fit fewer than two. The earlier 96px version failed because the
-   art was too small and only the title sat beside it: 124px keeps the machine
-   name legible, and the title and date together fill the thumb's height. The
-   meta wrapper drops out of the box tree so the date takes its own cell. The
-   intro spacing tightens to one 12px step between controls. */
+   On phones the machine card sits top-left, and the title, date, and a
+   two-line summary stack in one column beside it, starting at the image's top
+   edge. The badges run full width beneath. One text column gives the card a
+   single left edge; with only the title and date beside the image, they
+   floated in empty space and the summary restarted at the card edge. The card
+   is about 150px, against 367px for the old edge-to-edge cover. --wh-mthumb is
+   shared with the homepage tiles in font.css. The meta wrapper drops out of
+   the box tree so the date takes its own cell. The intro spacing tightens to
+   one 12px step between controls. */
 @media (max-width: 768px) {
+  /* The cover takes whatever width is left once the text column keeps 165px,
+     enough for the longest title ("Lumon Industries" plus its emoji) on one
+     line: 156px on a 393px iPhone, 138px at 375px, capped at 168px on wider
+     phones so the text column still fills the cover's height. 237px is the
+     page gutters (28px), card padding (30px), column gap (14px), and the
+     165px text column. */
+  :root {
+    --wh-mthumb: clamp(116px, calc(100vw - 237px), 168px);
+  }
+
   .main:has(#library-app) .page-header {
     margin-bottom: 20px;
   }
@@ -755,12 +766,12 @@
   }
 
   .library-post-card {
-    grid-template-columns: 124px minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    grid-template-columns: var(--wh-mthumb) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
     grid-template-areas:
       "thumb title"
       "thumb date"
-      "summary summary"
+      "thumb summary"
       "badges badges";
     column-gap: 0.85rem;
     row-gap: 0;
@@ -769,16 +780,17 @@
   }
 
   .library-post-thumb {
-    width: 124px;
+    grid-row: 1 / 4;
+    width: var(--wh-mthumb);
     align-self: start;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.85rem;
     border-radius: 5px;
   }
 
   .library-post-title {
-    align-self: end;
+    align-self: start;
     font-size: 1rem;
-    margin-bottom: 0.15rem;
+    margin: -0.1rem 0 0.1rem;
   }
 
   .library-post-meta {
@@ -789,11 +801,15 @@
     grid-area: date;
     align-self: start;
     width: auto;
-    margin: 0;
+    margin: 0 0 0.3rem;
   }
 
   .library-post-summary {
-    margin: 0 0 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin: 0 0 0.85rem;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .library-post-badges {
@@ -814,6 +830,21 @@
 @media (max-width: 359px) {
   .library-post-date {
     white-space: normal;
+  }
+}
+
+/* Narrow phones (under 375px, such as 360px Android screens) are too narrow
+   for the three badges on one line at full size. Tighter badges keep the row
+   whole. This applies to the homepage tiles too, which share the badge
+   classes. */
+@media (max-width: 374px) {
+  .library-post-badges {
+    gap: 0.35rem;
+  }
+
+  .library-badge {
+    padding: 0.2rem 0.42rem;
+    font-size: 0.66rem;
   }
 }
 
