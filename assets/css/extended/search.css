@@ -36,12 +36,15 @@
   margin: 0 0 1rem;
 }
 
+/* The left padding matches a hit's 2px hover bar plus its padding, so the
+   thumbnail lines up with the hit text below it. */
 .wh-result-head {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 0.9rem;
   margin-bottom: 0.6rem;
+  padding-left: calc(0.75rem + 2px);
   text-decoration: none;
   color: inherit;
 }
@@ -229,6 +232,20 @@
 
   .wh-result-head {
     grid-template-columns: 72px minmax(0, 1fr);
+    row-gap: 0.15rem;
+    padding-left: calc(0.6rem + 2px);
+  }
+
+  /* The thumbnail spans both rows so the title and count stack as one block
+     centred against it. On a single row the title centred against the
+     thumbnail and the count dropped into a row of its own beneath it. */
+  .wh-result-thumb {
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  .wh-result-title {
+    align-self: end;
   }
 
   .wh-result-head:not(:has(img)) {
@@ -246,6 +263,7 @@
   /* The count drops under the title rather than squeezing it. */
   .wh-result-count {
     grid-column: 2;
+    align-self: start;
   }
 
   .wh-result-head:not(:has(img)) .wh-result-count {

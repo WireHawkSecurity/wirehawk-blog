@@ -677,6 +677,11 @@
     font-size: 0.85rem;
   }
 
+  .library-page-btn {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
   .library-filter-panel {
     max-height: 50vh;
   }
@@ -726,12 +731,14 @@
 }
 
 /* ── Mobile card ──
-   On phones the machine card runs edge to edge across the top of the card,
-   with title, date, summary, and badges stacked beneath it. A 96px thumbnail
-   beside the title left the art too small to read and the text wrapping
-   around it. The meta wrapper drops out of the box tree so the date can sit
-   directly under the title, ahead of the summary. The intro spacing tightens
-   to one 12px step between controls. */
+   On phones a 124px machine card sits top-left with the title and date beside
+   it, and the summary and badges run full width beneath. That halves the card
+   to about 184px, so roughly four fit on a screen; the edge-to-edge cover ran
+   367px and fit fewer than two. The earlier 96px version failed because the
+   art was too small and only the title sat beside it: 124px keeps the machine
+   name legible, and the title and date together fill the thumb's height. The
+   meta wrapper drops out of the box tree so the date takes its own cell. The
+   intro spacing tightens to one 12px step between controls. */
 @media (max-width: 768px) {
   .main:has(#library-app) .page-header {
     margin-bottom: 20px;
@@ -748,31 +755,30 @@
   }
 
   .library-post-card {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto;
+    grid-template-columns: 124px minmax(0, 1fr);
+    grid-template-rows: auto auto;
     grid-template-areas:
-      "thumb"
-      "title"
-      "date"
-      "summary"
-      "badges";
+      "thumb title"
+      "thumb date"
+      "summary summary"
+      "badges badges";
+    column-gap: 0.85rem;
     row-gap: 0;
-    overflow: hidden;
-    padding: 1rem 1.1rem 1.1rem;
-    margin-bottom: 1rem;
+    padding: 0.85rem 0.95rem 0.95rem;
+    margin-bottom: 0.75rem;
   }
 
   .library-post-thumb {
-    width: auto;
-    margin: -1rem -1.1rem 0.95rem;
-    border: 0;
-    border-bottom: 1px solid #222222;
-    border-radius: 5px 5px 0 0;
+    width: 124px;
+    align-self: start;
+    margin: 0 0 0.75rem;
+    border-radius: 5px;
   }
 
   .library-post-title {
-    font-size: 1.08rem;
-    margin-bottom: 0.2rem;
+    align-self: end;
+    font-size: 1rem;
+    margin-bottom: 0.15rem;
   }
 
   .library-post-meta {
@@ -781,12 +787,13 @@
 
   .library-post-date {
     grid-area: date;
+    align-self: start;
     width: auto;
-    margin: 0 0 0.6rem;
+    margin: 0;
   }
 
   .library-post-summary {
-    margin: 0 0 0.85rem;
+    margin: 0 0 0.7rem;
   }
 
   .library-post-badges {
@@ -799,6 +806,14 @@
   .library-filter-trigger {
     font-size: 0.8rem;
     padding-left: 0.7rem;
+  }
+}
+
+/* Below 360px the date beside the thumbnail no longer fits on one line, so it
+   is allowed to wrap rather than run past the card edge. */
+@media (max-width: 359px) {
+  .library-post-date {
+    white-space: normal;
   }
 }
 

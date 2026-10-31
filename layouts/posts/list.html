@@ -514,7 +514,7 @@
         // 360px, so a 3x screen needs the 1152px rendition to stay sharp.
         if (post.cover2x) {
           thumb.srcset = post.cover + ' 576w, ' + post.cover2x + ' 1152w';
-          thumb.sizes = '(max-width: 768px) calc(100vw - 2rem), (max-width: 1099px) 288px, 208px';
+          thumb.sizes = '(max-width: 768px) 124px, (max-width: 1099px) 288px, 208px';
         }
         thumb.alt = '';
         thumb.loading = 'lazy';

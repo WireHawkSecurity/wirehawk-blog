@@ -22,7 +22,7 @@
        block in font.css (720px cap, 16px field) still styles it. Results sit
        outside it so they use the full content width. */}}
 <div id="searchbox" class="searchbox">
-  <input id="whSearchInput" placeholder="{{ .Params.placeholder | default "Search…" }}" aria-label="Search walkthroughs" aria-describedby="whSearchStatus" type="search" autocomplete="off" spellcheck="false" maxlength="128">
+  <input id="whSearchInput" placeholder="{{ .Params.placeholder | default "Search…" }}" aria-label="Search posts" aria-describedby="whSearchStatus" type="search" autocomplete="off" spellcheck="false" maxlength="128">
 </div>
 <p id="whSearchStatus" class="wh-search-status" role="status" aria-live="polite"></p>
 <ol id="whSearchResults" class="wh-results" aria-label="Search results"></ol>
@@ -82,12 +82,12 @@
     list.innerHTML = '';
     if (!q) { status.textContent = ''; return; }
     if (!pages.length) {
-      status.textContent = 'No walkthrough mentions “' + q + '”.';
+      status.textContent = 'No post mentions “' + q + '”.';
       return;
     }
     var hitCount = pages.reduce(function (n, p) { return n + p.hits.length; }, 0);
     status.textContent = hitCount + ' match' + (hitCount !== 1 ? 'es' : '') +
-      ' in ' + pages.length + ' walkthrough' + (pages.length !== 1 ? 's' : '');
+      ' in ' + pages.length + ' post' + (pages.length !== 1 ? 's' : '');
 
     pages.forEach(function (p) {
       var meta = byUrl[p.url] || { title: p.title, url: p.url };

@@ -75,7 +75,24 @@
 <article class="{{ $class }}">
   {{- /* Listing covers ignore cover.hidden so they show on the homepage listing; post bodies still hide the cover via single.html. Use cover.hiddenInList to hide a specific cover from listings. */ -}}
   {{- $isHidden := (.Param "cover.hiddenInList") | default false }}
+  {{- /* The homepage tiles show the cover at 124-288px, so they use the same
+         576/1152 WebP crops as the Posts library cards rather than the theme's
+         srcset, whose sizes attribute assumes a 720px-wide cover and sends a
+         450-750 KB PNG per tile. Other listings keep the theme partial. */}}
+  {{- $homeCover := false }}
+  {{- if and $.IsHome .Params.cover.image (not $isHidden) }}
+  {{- with .Resources.GetMatch .Params.cover.image }}
+  {{- $homeCover = true }}
+  {{- $c1 := .Fill "576x324 center webp q80" }}
+  {{- $c2 := .Fill "1152x648 center webp q75" }}
+  <figure class="entry-cover">
+    <img loading="lazy" src="{{ $c1.RelPermalink }}" srcset="{{ $c1.RelPermalink }} 576w, {{ $c2.RelPermalink }} 1152w" sizes="(max-width: 768px) 124px, (max-width: 1099px) 288px, 208px" width="576" height="324" alt="{{ $page.Params.cover.alt | default $page.Params.cover.caption | plainify }}">
+  </figure>
+  {{- end }}
+  {{- end }}
+  {{- if not $homeCover }}
   {{- partial "cover.html" (dict "cxt" . "IsSingle" false "isHidden" $isHidden) }}
+  {{- end }}
   <header class="entry-header">
     <h2 class="entry-hint-parent">
       {{- .Title }}

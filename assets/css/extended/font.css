@@ -194,7 +194,40 @@ a:hover {
   width: 2.75rem !important;
   height: 2.75rem !important;
   color: #888888 !important;
-  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  /* Keeps the theme's fade on show and hide alongside the hover colours. */
+  transition: visibility 0.3s, opacity 0.3s cubic-bezier(0.4, 0, 1, 1),
+    border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* PaperMod lifts the button 5rem on list pages (Home, Posts) to clear its own
+   pagination bar, which this site does not use. The button sits in the same
+   spot on every page instead. */
+.list .top-link {
+  transform: none;
+}
+
+/* Keyboard focus matches the site's other controls instead of the browser's
+   default ring. */
+.top-link:focus-visible {
+  outline: none;
+  border-color: var(--wh-red) !important;
+  color: var(--wh-red) !important;
+  box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.2);
+}
+
+/* Below desktop the content runs close to the right edge, so at the bottom of
+   a post the button sat on top of the Next link and took its taps. It moves
+   into the corner, and the footer gains enough bottom padding that, scrolled
+   to the end, the button rests in empty space below the copyright line. */
+@media (max-width: 1099px) {
+  .top-link {
+    right: 1rem !important;
+    bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .footer {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 @media (hover: hover) {
@@ -426,36 +459,40 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-  /* Date under the title and badges last, matching the library's mobile
-     card. The footer drops out of the box tree so its two children take grid
-     cells directly. */
+  /* Matches the library's mobile card: a 124px cover top-left with the title
+     and date beside it, summary and badges full width beneath. The footer
+     drops out of the box tree so its two children take grid cells directly. */
   .latest-grid .post-entry {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 124px minmax(0, 1fr);
+    grid-template-rows: auto auto;
     grid-template-areas:
-      "thumb"
-      "header"
-      "date"
-      "content"
-      "badges";
-    overflow: hidden;
-    padding: 0 1.1rem 1.1rem;
-    margin-bottom: 1rem;
+      "thumb header"
+      "thumb date"
+      "content content"
+      "badges badges";
+    column-gap: 0.85rem;
+    row-gap: 0;
+    padding: 0.85rem 0.95rem 0.95rem;
+    margin-bottom: 0.75rem;
   }
 
   .latest-grid .post-entry .entry-cover {
-    width: auto;
-    margin: 0 -1.1rem 0.95rem;
-    border: 0;
-    border-bottom: 1px solid #222222;
-    border-radius: 5px 5px 0 0;
+    width: 124px;
+    align-self: start;
+    margin: 0 0 0.75rem;
+    border-radius: 5px;
+  }
+
+  .latest-grid .entry-header {
+    align-self: end;
   }
 
   .latest-grid .entry-header h2 {
-    font-size: 1.08rem;
+    font-size: 1rem;
   }
 
   .latest-grid .entry-content {
-    margin: 0 0 0.85rem;
+    margin: 0 0 0.7rem;
   }
 
   .latest-grid .entry-footer {
@@ -464,14 +501,23 @@ a:hover {
 
   .latest-grid .entry-date {
     grid-area: date;
+    align-self: start;
     font-size: 0.7rem;
     color: #808080;
-    margin: 0.2rem 0 0.6rem;
+    margin: 0.15rem 0 0;
   }
 
   .latest-grid .post-entry .entry-badges {
     grid-area: badges;
     margin-bottom: 0;
+  }
+}
+
+/* Below 360px the date beside the cover no longer fits on one line, so it is
+   allowed to wrap rather than run past the card edge. */
+@media (max-width: 359px) {
+  .latest-grid .entry-date {
+    white-space: normal;
   }
 }
 

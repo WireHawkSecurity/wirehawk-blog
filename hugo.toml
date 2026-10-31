@@ -40,7 +40,7 @@ enableRobotsTXT = true
 
   [params.homeInfoParams]
     Title = "WireHawk Security | Blog"
-    Content = "Offensive security walkthroughs across the full attack chain, from OSINT and enumeration to exploitation and post-exploitation."
+    Content = "Offensive security, written by 0xB1rd."
 
   [[params.socialIcons]]
     name = "x"
