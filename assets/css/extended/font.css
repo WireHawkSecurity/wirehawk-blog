@@ -409,18 +409,49 @@ a:hover {
   margin-bottom: 0.75rem;
 }
 
-/* The theme makes the input bold and full-width, which reads oversized and
-   stretches the field the whole content width on desktop. Normal weight, a 16px
-   field (16px also stops iOS Safari zooming in on focus), a bit more padding, and
-   a width cap so it stays a sensible size on desktop and goes full-width on mobile. */
+/* The theme makes the input bold, which reads oversized. Normal weight, a 16px
+   field (16px also stops iOS Safari zooming in on focus), and a bit more padding.
+   The width matches the Posts library search field, which stops at the 720px
+   reading width on desktop; both go full-width on mobile. */
 .searchbox {
-  max-width: 600px;
+  max-width: var(--main-width);
 }
 
+/* Colors, border, and focus state match the Posts library search field
+   (.library-search in library.css), so the two search fields read as one
+   component. That field adds a magnifying-glass icon; this one does not, since
+   the Search heading already carries it. */
 .searchbox input {
   font-weight: 400;
   font-size: 1rem;
-  padding: 10px 14px;
+  padding: 0.7rem 1rem;
+  background: #151515;
+  border: 1px solid #222222;
+  border-radius: 6px;
+  color: #c0c0c0;
+  outline: none;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.searchbox input:focus {
+  border-color: var(--wh-red);
+}
+
+.searchbox input:focus-visible {
+  border-color: var(--wh-red);
+  box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.2);
+}
+
+.searchbox input::placeholder {
+  color: #555;
+}
+
+.searchbox input::-webkit-search-cancel-button,
+.searchbox input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 /* ── Mobile ── */

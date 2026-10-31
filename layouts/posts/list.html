@@ -1,7 +1,6 @@
 {{- define "main" }}
 
 <header class="page-header">
-  {{ partial "breadcrumbs.html" . }}
   <h1>{{ .Title }}</h1>
   {{- if .Description }}
   <div class="post-description">
@@ -61,12 +60,73 @@
   ];
 
   var activeFilters = { platform: [], tag: [], diff: [], type: [] };
-  // Two-column grid on desktop shows a full 2x2 page; phones keep five stacked.
-  // Matches the 769px breakpoint in library.css.
-  var desktopQuery = window.matchMedia('(min-width: 769px)');
-  var PAGE_SIZE = desktopQuery.matches ? 4 : 5;
+
+  // Front matter summaries open with a fixed clause ("A medium-difficulty
+  // Active Directory lab where ...") because RSS readers see nothing else. On a
+  // card the difficulty and tag badges already say that, so the card drops the
+  // clause and leads with what makes the post different. The front matter and
+  // RSS are untouched. The first word is capitalised only when it is a plain
+  // lowercase word, so a tool name like ntlm_theft keeps its casing.
+  // The CSS line clamp cuts mid-word ("a saved Firef..."). Each plain summary
+  // is trimmed to the last whole word that fits its clamped line count, with
+  // the clamp left in place as a fallback. Search excerpts carry match markup
+  // and keep the CSS clamp alone.
+  function fitSummary(el) {
+    var full = el.getAttribute('data-full');
+    if (full === null) { full = el.textContent; el.setAttribute('data-full', full); }
+    var cs = getComputedStyle(el);
+    var lines = parseInt(cs.webkitLineClamp || cs.getPropertyValue('line-clamp'), 10);
+    var lh = parseFloat(cs.lineHeight);
+    if (!lines || !lh) return;
+    var maxH = lines * lh + 1;
+    el.style.display = 'block';
+    el.style.webkitLineClamp = 'unset';
+    el.textContent = full;
+    if (el.scrollHeight > maxH) {
+      var words = full.split(' ');
+      var lo = 1, hi = words.length - 1;
+      // Ends on a content word: trailing connectives ("lead to", "in an") are
+      // dropped before the ellipsis so a summary never trails off on "a...".
+      var weak = /^(a|an|the|to|of|in|on|for|with|through|and|or|its|by|from|into|over|as|at|that|which)$/i;
+      var cut = function (n) {
+        var w = words.slice(0, n);
+        while (w.length > 1 && weak.test(w[w.length - 1].replace(/[,;:.]+$/, ''))) w.pop();
+        return w.join(' ').replace(/[\s,;:.]+$/, '') + '\u2026';
+      };
+      while (lo < hi) {
+        var mid = Math.ceil((lo + hi) / 2);
+        el.textContent = cut(mid);
+        if (el.scrollHeight <= maxH) lo = mid; else hi = mid - 1;
+      }
+      el.textContent = cut(lo);
+    }
+    el.style.display = '';
+    el.style.webkitLineClamp = '';
+  }
+
+  function fitSummaries() {
+    postListEl.querySelectorAll('.library-post-summary:not(.library-post-excerpt)').forEach(fitSummary);
+  }
+
+  var fitTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitSummaries, 150);
+  });
+
+  function cardSummary(text) {
+    var rest = text.replace(/^An? (?:easy|medium|hard)-difficulty [^.]*? lab (?:where|chaining) /i, '');
+    if (rest === text) return text;
+    return /^[a-z]+\b/.test(rest) && !/^[a-z]+[_.\d]/.test(rest)
+      ? rest.charAt(0).toUpperCase() + rest.slice(1)
+      : rest;
+  }
+  // Two-column grid on desktop shows three full rows; phones and tablets keep five.
+  // Matches the 1100px breakpoint in library.css.
+  var desktopQuery = window.matchMedia('(min-width: 1100px)');
+  var PAGE_SIZE = desktopQuery.matches ? 6 : 5;
   desktopQuery.addEventListener('change', function (e) {
-    PAGE_SIZE = e.matches ? 4 : 5;
+    PAGE_SIZE = e.matches ? 6 : 5;
     currentPage = 1;
     renderPosts();
   });
@@ -468,7 +528,7 @@
         summary.innerHTML = trimToMatch(exHtml);
       } else {
         summary.className = 'library-post-summary';
-        summary.textContent = post.summary;
+        summary.textContent = cardSummary(post.summary);
       }
 
       var meta = document.createElement('div');
@@ -515,6 +575,8 @@
       card.appendChild(meta);
       postListEl.appendChild(card);
     });
+
+    fitSummaries();
 
     resultsEl.textContent = filtered.length + ' post' + (filtered.length !== 1 ? 's' : '');
     emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';

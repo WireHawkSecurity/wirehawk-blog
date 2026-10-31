@@ -257,7 +257,7 @@
 
 .library-results-count {
   font-size: 0.85rem;
-  color: #666;
+  color: #808080;
 }
 
 .library-clear-btn {
@@ -354,6 +354,9 @@
 .library-post-summary {
   grid-area: summary;
   min-width: 0;
+  /* Evens out line lengths and avoids a lone word on the last line where
+     supported (Chrome, Edge, Safari); other browsers wrap normally. */
+  text-wrap: pretty;
   font-size: 0.88rem;
   color: #888888;
   line-height: 1.55;
@@ -403,10 +406,13 @@
   border: 1px solid rgba(106, 127, 212, 0.2);
 }
 
+/* Topic tags are neutral so the difficulty badge is the only traffic-light
+   colour on a card. They previously shared the Easy teal, which ran the two
+   together on every easy post. */
 .library-badge-tag {
-  background: rgba(93, 196, 164, 0.08);
-  color: #5DC4A4;
-  border: 1px solid rgba(93, 196, 164, 0.15);
+  background: rgba(168, 173, 182, 0.08);
+  color: #a8adb6;
+  border: 1px solid rgba(168, 173, 182, 0.18);
 }
 
 .library-badge-resource {
@@ -435,7 +441,8 @@
 
 .library-post-date {
   font-size: 0.7rem;
-  color: #555;
+  /* #808080 is the darkest grey that clears 4.5:1 contrast on the #151515 card. */
+  color: #808080;
   white-space: nowrap;
   flex-shrink: 0;
   width: 100%;
@@ -477,12 +484,18 @@
 }
 
 /* ── Desktop grid ──
-   Above the mobile breakpoint the results sit two to a row. The 720px column
-   is too narrow for a 288px thumbnail beside the text at half width, so each
-   card stacks: machine card on top, then title, summary, and meta. The summary
-   row takes the slack so the meta row lines up across a row of cards. Mobile
-   keeps the compact single-column card defined below. */
-@media (min-width: 769px) {
+   On wide screens the Posts page breaks out of the 720px reading column to the
+   1024px nav width, so the library lines up with the header, and the results
+   sit two to a row, three rows to a page. Each tile puts the machine card on
+   the left with the title and summary beside it, and runs the badges and date
+   along the bottom at full width, which leaves room for a larger machine card
+   than a text column could. Below 1100px two tiles side by side get cramped, so
+   tablets keep the single-column card above and phones the compact card below. */
+@media (min-width: 1100px) {
+  .main:has(#library-app) {
+    max-width: calc(var(--nav-width) + var(--gap) * 2);
+  }
+
   #postList {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -490,20 +503,82 @@
   }
 
   #postList .library-post-card {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 208px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
-      "thumb"
-      "title"
-      "summary"
-      "meta";
+      "thumb title"
+      "thumb summary"
+      "meta  meta";
+    column-gap: 0.9rem;
     margin-bottom: 0;
     padding: 1rem;
   }
 
   #postList .library-post-thumb {
-    width: 100%;
-    margin-bottom: 0.9rem;
+    width: 208px;
+    align-self: start;
+  }
+
+  #postList .library-post-title {
+    margin-bottom: 0.35rem;
+  }
+
+  /* align-self: start keeps the clamped box at its own clamped height.
+     Stretched to fill the row beside the machine card, it showed part of a
+     fourth line under the ellipsis. */
+  #postList .library-post-summary {
+    align-self: start;
+    margin-bottom: 0;
+    /* Four lines fill the height beside the 208px machine card. */
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+
+  /* Badges left, date right, on one line under both columns. */
+  #postList .library-post-meta {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+  }
+
+  /* No webfont is loaded, so badge widths follow each OS's system font. The
+     tighter gap and padding keep three badges and the date on one line with
+     margin to spare on the widest fallback. */
+  #postList .library-post-badges {
+    width: auto;
+    gap: 0.35rem;
+  }
+
+  #postList .library-badge {
+    padding: 0.2rem 0.45rem;
+  }
+
+  #postList .library-post-date {
+    width: auto;
+    margin-top: 0;
+  }
+}
+
+/* ── Desktop intro ──
+   The library runs at the 1024px nav width on wide screens, and everything
+   shares its left edge with the site logo: title, description, search, filters,
+   then the grid. The search field and filters stay at the 720px reading width
+   rather than stretching across the page, so the intro reads as a compact
+   block above the wider grid. The results count and its divider span the
+   grid, marking where the intro ends and the results begin. */
+@media (min-width: 1100px) {
+  .main:has(#library-app) .page-header {
+    margin-bottom: 24px;
+  }
+
+  #library-app > .library-search-wrap,
+  #library-app > .library-filters {
+    max-width: var(--main-width);
+  }
+
+  #library-app > .library-search-wrap {
+    margin-bottom: 1rem;
   }
 }
 
