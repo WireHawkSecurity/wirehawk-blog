@@ -686,6 +686,8 @@
     max-height: 50vh;
   }
 
+  /* Superseded by the "Mobile card" block below, which sets the phone layout;
+     only align-items here still applies. */
   .library-post-card {
     grid-template-columns: 96px minmax(0, 1fr);
     grid-template-areas:

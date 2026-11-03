@@ -379,9 +379,9 @@ a:hover {
    the 720px reading column to the 1024px nav width, sharing its left edge with
    the logo, and the cards sit two across in three rows: a 208px machine card on
    the left with the title and summary beside it, badges and date along the
-   bottom. The intro keeps the reading width. On phones the machine card runs
-   edge to edge across the top of the card, as in the library. Tablets keep the
-   horizontal card. */
+   bottom. The intro keeps the reading width. On phones the machine card sits
+   top-left with the title, date, and summary beside it, as in the library.
+   Tablets keep the horizontal card. */
 .entry-date {
   white-space: nowrap;
 }
@@ -688,8 +688,9 @@ a:hover {
     margin-bottom: 1.75rem;
   }
 
-  /* Compact card matching the Posts library: 96px 16:9 thumbnail top-left,
-     title beside it, summary and footer spanning full width beneath. */
+  /* Compact card for listings other than the homepage, whose .latest-grid
+     rules above take precedence: 96px 16:9 thumbnail top-left, title beside
+     it, summary and footer spanning full width beneath. */
   .post-entry {
     grid-template-columns: 96px minmax(0, 1fr);
     grid-template-areas:
