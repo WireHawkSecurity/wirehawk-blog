@@ -10,7 +10,7 @@
 
    Breakpoints:
      Base ............ inline ToC (tablet + mobile fallback)
-     ≥1440px ........ fixed sidebar, compact sizing
+     ≥1100px ........ fixed sidebar in the right gutter, compact sizing
      ≤768px ......... force inline, reset any fixed props
    =================================================================== */
 
@@ -136,15 +136,31 @@ details.toc .inner a.active {
 }
 
 
-/* ── Desktop Sidebar (≥1440px) ── */
+/* ── Desktop Sidebar (≥1100px) ──
+   From 1100px the post breaks out to the 1024px nav width like every other
+   page: the article keeps the 720px reading column on the left, sharing its
+   edge with the logo, and the ToC sits fixed in the remaining right gutter.
+   50% - 512px is the left edge of the nav; 720px of article plus a 40px gap
+   puts the ToC at 50% + 248px, and 264px wide ends it on the nav's right
+   edge. */
 
-@media (min-width: 1440px) {
+@media (min-width: 1100px) {
+    .main:has(.post-single) {
+        max-width: calc(var(--nav-width) + var(--gap) * 2);
+    }
+
+    /* Subscribe shares the post-single wrapper and sets its own width in
+       subscribe.css, so it is left out. */
+    .post-single:not(:has(.subscribe-page)) {
+        max-width: var(--main-width);
+    }
+
     details.toc {
         position: fixed;
         top: 5rem;
-        left: calc(50% + 420px);
+        left: calc(50% + 248px);
         right: auto;
-        width: 220px;
+        width: 264px;
         max-height: calc(100vh - 7rem);
         overflow-y: auto;
         margin-bottom: 0;
@@ -178,6 +194,17 @@ details.toc .inner a.active {
     details.toc::-webkit-scrollbar-thumb {
         background: #333;
         border-radius: 2px;
+    }
+}
+
+
+/* Below 1180px the scroll-to-top button's column overlaps the ToC's, so a
+   long ToC could run underneath it. Capping the height keeps the ToC's bottom
+   edge above the button (top 5rem + this height + 1rem gap ends at the
+   button's top, 108px above the viewport bottom). */
+@media (min-width: 1100px) and (max-width: 1179px) {
+    details.toc {
+        max-height: calc(100vh - 13.25rem);
     }
 }
 
