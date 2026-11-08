@@ -574,7 +574,7 @@ LDAP        10.1.117.162    389    DC-STELLAR       Account: SATLINK-SERVICE$   
 
 *NetExec reading the SATLINK-SERVICE$ gMSA password as eng.payload and returning its NT hash*
 
-NetExec returns the account's NT hash and lists `eng.payload` and `SATLINK-SERVICE$` itself as the only principals allowed to read the password. NTLM authenticates with the hash itself, so we pass it directly.
+NetExec returns the account's NT hash and lists `eng.payload` and `SATLINK-SERVICE$` itself as the only principals allowed to read the password.
 
 ## NTDS Dump
 

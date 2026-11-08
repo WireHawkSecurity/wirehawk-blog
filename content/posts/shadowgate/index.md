@@ -447,7 +447,7 @@ Certipy v5.0.4 - by Oliver Lyak (ly4k)
 
 *Certipy PKINIT: TGT and NT hash for DC01$*
 
-Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob out of the ticket's PAC. NTLM authenticates with the hash itself, so there is nothing left to crack.
+Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob out of the ticket's PAC.
 
 ## NTDS Dump
 

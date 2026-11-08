@@ -80,7 +80,7 @@ We proxy through Burp Suite so every request the application makes is captured f
 
 *Verbose web application with Wappalyzer confirming Flask and Python*
 
-Wappalyzer confirms this is a Flask application running Python. We register an account and click through the application as a standard user. The messages feature displays a list of users available to message.
+[Wappalyzer](https://www.wappalyzer.com/) confirms this is a Flask application running Python. We register an account and click through the application as a standard user. The messages feature displays a list of users available to message.
 
 ![Messages user list](images/messages-users.png)
 

