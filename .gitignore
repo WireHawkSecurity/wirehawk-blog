@@ -94,8 +94,8 @@ hashcat.potfile
 # ─────────────────────────────────────────────────────────────
 # Governing documents — local project files, not repo content
 # ─────────────────────────────────────────────────────────────
-WireHawk-Content-Style-Guide.md
-WireHawk-Blog-Infrastructure-Guide.md
+WireHawk-Content-Style-Guide*.md
+WireHawk-Blog-Infrastructure-Guide*.md
 
 # ─────────────────────────────────────────────────────────────
 # Post production artifacts — deleted before publishing.
