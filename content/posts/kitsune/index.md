@@ -715,8 +715,8 @@ We have a shell on the domain controller as the domain Administrator, so the dom
 
 ## Final Thoughts
 
-The certificate request was the one place I had to stop: it failed on `CERTSRV_E_KEY_LENGTH` until I matched the template's 4096-bit minimum with `-key-size`. The DPAPI credential in `schlop`'s Documents folder was the other thing I checked, since `Import-Clixml` only decrypts for the same user on the same machine, which is where we already were.
+The certificate request was the one place I had to stop: it failed on `CERTSRV_E_KEY_LENGTH` until I matched the template's 4096-bit minimum with `-key-size`. The DPAPI credential in `schlop`'s Documents folder was the other thing I checked.
 
-A Password Safe database of service credentials should never sit on a share Guest can read, since a vault is only a vault while the file behind it is out of reach. A template that links its issuance policy to a group hands that group's membership to anyone who can enroll, which is what ESC13 turns into escalation here. An exported credential decrypts for anyone who reaches its owner's session, so it is a stored password, not a protected one. A gMSA's readers should be the hosts that run the service, not users. And Backup Operators is tier 0 on a domain controller, since SeBackupPrivilege reads the hives that lead to NTDS.
+A Password Safe database of service credentials should never sit on a share Guest can read, since a vault is only a vault while the file behind it is out of reach. A certificate template that links its issuance policy to a group hands that group's membership to anyone who can enroll. An exported credential decrypts for anyone who reaches its owner's session, so it is a stored password, not a protected one. A gMSA's readers should be the hosts that run the service, not users. And Backup Operators is tier 0 on a domain controller, since SeBackupPrivilege reads the hives that lead to NTDS.
 
 — 0xB1rd

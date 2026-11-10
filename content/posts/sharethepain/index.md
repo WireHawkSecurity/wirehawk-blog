@@ -381,7 +381,7 @@ server_name       login                   xp_cmdshell   sysadmin   advanced_opti
 DC01\SQLEXPRESS   HACK\alice.wonderland   b'ENABLED'    b'YES'     b'ENABLED'
 ```
 
-We connected as `alice.wonderland`, and the account is a sysadmin on the instance with `xp_cmdshell` already enabled. `xp_cmdshell` runs operating system commands as the account the SQL Server service runs as rather than as the login we connected with, so a command confirms who that is.
+We are connected as `alice.wonderland`, and the account is a sysadmin on the instance with `xp_cmdshell` already enabled. `xp_cmdshell` runs operating system commands as the account the SQL Server service runs as rather than as the login we connected with, so a command confirms who that is.
 
 ```
 EXEC xp_cmdshell 'whoami';
