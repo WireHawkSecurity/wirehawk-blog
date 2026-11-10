@@ -248,7 +248,7 @@ Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 /usr/share/doc/python3-impacket/examples/dacledit.py:390: DeprecationWarning: codecs.open() is deprecated. Use open() instead.
   with codecs.open(self.filename, 'w', 'utf-8') as outfile:
-[*] DACL backed up to dacledit-20261009-114854.bak
+[*] DACL backed up to dacledit-20261027-214301.bak
 [*] DACL modified successfully!
 ```
 
@@ -510,7 +510,9 @@ impacket-dacledit -action 'write' -rights 'FullControl' -principal 'astro.resear
 ```
 Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
-[*] DACL backed up to dacledit-20261010-185641.bak
+/usr/share/doc/python3-impacket/examples/dacledit.py:390: DeprecationWarning: codecs.open() is deprecated. Use open() instead.
+  with codecs.open(self.filename, 'w', 'utf-8') as outfile:
+[*] DACL backed up to dacledit-20261027-220432.bak
 [*] DACL modified successfully!
 ```
 

