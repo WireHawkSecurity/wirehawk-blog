@@ -63,6 +63,32 @@
     });
   }
 
+  function copyCommand(text, btn) {
+    var flash = function () {
+      if (btn.classList.contains('wh-hit-copied')) return;
+      btn.classList.add('wh-hit-copied');
+      btn.textContent = 'Copied';
+      setTimeout(function () { btn.classList.remove('wh-hit-copied'); btn.textContent = 'Copy'; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(flash, function () { copyFallback(text, flash); });
+    } else {
+      copyFallback(text, flash);
+    }
+  }
+
+  function copyFallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   function hitItem(h, hidden) {
     var li = document.createElement('li');
     li.className = 'wh-hit wh-hit-' + h.kind;
@@ -75,6 +101,19 @@
         ? '<code class="wh-hit-snippet">' + h.html + '</code>'
         : '<span class="wh-hit-snippet">' + h.html + '</span>');
     li.appendChild(a);
+    if (h.kind === 'code' && h.copy) {
+      var copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'wh-hit-copy';
+      copyBtn.setAttribute('aria-label', 'Copy command');
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        copyCommand(h.copy, copyBtn);
+      });
+      li.appendChild(copyBtn);
+    }
     return li;
   }
 

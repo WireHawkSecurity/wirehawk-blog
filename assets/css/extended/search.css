@@ -135,6 +135,7 @@
    screen. */
 .wh-hit-code .wh-hit-snippet {
   display: block;
+  margin-top: 0.9rem;
   padding: 0.45rem 0.65rem;
   background: #0d0d0d;
   border: 1px solid #222222;
@@ -167,6 +168,63 @@
   color: var(--wh-red-light);
   padding: 0 0.15em;
   border-radius: 2px;
+}
+
+/* ── Copy command button ── */
+/* Lets a reader lift a command straight from the results. It sits over the
+   section line, clear of the command well, and is a sibling of the hit link
+   (not inside it) so a click copies without opening the post. */
+.wh-hit {
+  position: relative;
+}
+
+.wh-hit-code .wh-hit-section {
+  padding-right: 5.5rem;
+}
+
+.wh-hit-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.55rem;
+  z-index: 1;
+  padding: 0.35rem 0.85rem;
+  min-width: 4.5rem;
+  text-align: center;
+  background: #151515;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  color: #888888;
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .wh-hit-copy:hover {
+    border-color: var(--wh-red);
+    color: var(--wh-red);
+  }
+}
+
+.wh-hit-copy:focus-visible {
+  outline: none;
+  border-color: var(--wh-red);
+  color: var(--wh-red);
+  box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.25);
+}
+
+.wh-hit-copy.wh-hit-copied {
+  border-color: var(--wh-red);
+  color: var(--wh-red-light);
+}
+
+@media (max-width: 768px) {
+  .wh-hit-copy {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+  }
 }
 
 .wh-hits-more {

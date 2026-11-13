@@ -200,6 +200,9 @@
         // tool often differ only in their last flags. Longer output blocks
         // get a window around the match.
         html: snippet(words, g.locs, from, to, g.kind === 'code' ? (to - from <= 40 ? 40 : 10) : 12, g.kind === 'code'),
+        // Full command text for the copy button, set only when the whole
+        // command is shown (<= 40 words). Longer output blocks get no button.
+        copy: g.kind === 'code' && (to - from) <= 40 ? words.slice(from, to).join(' ') : null,
         score: Object.keys(g.terms).length,
         order: i
       };
