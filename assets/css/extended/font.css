@@ -251,25 +251,6 @@ a:hover {
   color: var(--wh-red) !important;
 }
 
-/* ── Footer social ── */
-.footer .social-icons {
-  margin-bottom: 10px;
-}
-
-.footer .social-icons a {
-  padding: 7px;
-  color: var(--secondary);
-}
-
-.footer .social-icons a:hover {
-  color: var(--wh-red);
-}
-
-.footer .social-icons a svg {
-  height: 19px;
-  width: 19px;
-}
-
 /* ── Homepage Hero ── */
 .first-entry {
   min-height: auto;
@@ -674,17 +655,6 @@ a:hover {
 /* ── Header logo ── */
 .logo a {
   font-size: 26px;
-}
-
-/* Home-page masthead tagline (the h1): a muted subtitle under the logo. */
-.site-tagline {
-  width: 100%;
-  margin: 5px 0 0;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.4;
-  letter-spacing: 0;
-  color: var(--secondary);
 }
 
 /* ── Mobile ── */
