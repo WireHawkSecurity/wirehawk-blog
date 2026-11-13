@@ -256,7 +256,10 @@
 /* ── Landing on a post from a search hit ── */
 
 .post-content mark.wh-hl {
-  background: rgba(var(--wh-red-rgb), 0.3);
+  /* Solid #7C2C22 with white text == the mouse text-selection color
+     (::selection in font.css), so a searched word looks exactly like a
+     selected word when you land on it. Keep the two in sync. */
+  background: #7C2C22;
   color: #ffffff;
   padding: 0 0.1em;
   border-radius: 2px;
@@ -345,14 +348,13 @@
 }
 
 /* ── Desktop width ──
-   Matches the Posts library: on wide screens the page breaks out of the 720px
-   reading column to the 1024px nav width and shares its left edge with the
-   site logo. The search field stays at 720px (the .searchbox cap in
-   font.css), and the results, which are mostly code blocks, take the full
-   width so long commands wrap less. Results stay a single column so they read
-   in relevance order. */
+   The whole search page sits in the 720px reading column, centered, so the
+   results align with the 720px search field instead of overhanging it. That is
+   a comfortable reading measure for the prose snippets and still wide enough
+   for the walkthrough commands. Results stay a single column so they read in
+   relevance order. */
 @media (min-width: 1100px) {
   .main:has(#whSearchResults) {
-    max-width: calc(var(--nav-width) + var(--gap) * 2);
+    max-width: calc(var(--main-width) + var(--gap) * 2);
   }
 }
