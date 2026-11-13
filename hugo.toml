@@ -19,6 +19,7 @@ enableRobotsTXT = true
   author = "0xB1rd"
   defaultTheme = "dark"
   disableThemeToggle = true
+  disableSpecial1stPost = true
   ShowScrollTopButton = true
   showReadingTime = true
   showShareButtons = false
@@ -37,10 +38,6 @@ enableRobotsTXT = true
   [params.assets]
     theme_color = "#0d0d0d"
     msapplication_TileColor = "#0d0d0d"
-
-  [params.homeInfoParams]
-    Title = "WireHawk Security | Blog"
-    Content = "Offensive security, written by 0xB1rd."
 
   [[params.socialIcons]]
     name = "x"

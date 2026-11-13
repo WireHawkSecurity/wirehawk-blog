@@ -230,6 +230,15 @@ a:hover {
   }
 }
 
+/* Desktop: anchor the scroll-to-top button beside the centered content column
+   instead of the far viewport corner, where it was easy to miss on wide
+   screens. Mobile (max-width:1099px) keeps the corner placement above. */
+@media (min-width: 1100px) {
+  .top-link {
+    right: max(2rem, calc(50% - var(--nav-width) / 2 - 3.25rem)) !important;
+  }
+}
+
 @media (hover: hover) {
   .top-link:hover {
     border-color: var(--wh-red) !important;
@@ -240,6 +249,25 @@ a:hover {
 .top-link:active {
   border-color: var(--wh-red) !important;
   color: var(--wh-red) !important;
+}
+
+/* ── Footer social ── */
+.footer .social-icons {
+  margin-bottom: 10px;
+}
+
+.footer .social-icons a {
+  padding: 7px;
+  color: var(--secondary);
+}
+
+.footer .social-icons a:hover {
+  color: var(--wh-red);
+}
+
+.footer .social-icons a svg {
+  height: 19px;
+  width: 19px;
 }
 
 /* ── Homepage Hero ── */
@@ -643,6 +671,22 @@ a:hover {
   appearance: none;
 }
 
+/* ── Header logo ── */
+.logo a {
+  font-size: 26px;
+}
+
+/* Home-page masthead tagline (the h1): a muted subtitle under the logo. */
+.site-tagline {
+  width: 100%;
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--secondary);
+}
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   /* Tighten the header band on mobile. PaperMod's 60px desktop header-height is
@@ -655,6 +699,11 @@ a:hover {
     row-gap: 1.25rem;
     padding-top: 1rem;
     padding-bottom: 1rem;
+  }
+
+  /* Keep the home-link logo a comfortable tap target despite the tight band. */
+  .logo a {
+    min-height: 44px;
   }
 
   .post-title {
@@ -758,21 +807,22 @@ a:hover {
     margin-bottom: 1.75rem;
   }
 
+  /* Post nav stays two-up on phones, matching desktop (Jordan, Nov 2026). */
   .paginav {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .paginav a {
-    width: 100%;
+    width: 50%;
     margin: 0;
   }
 
   .paginav a:only-child {
-    width: 100%;
+    width: 50%;
   }
 
   .paginav a.next:only-child {
-    margin-left: 0;
+    margin-left: auto;
   }
 
 }

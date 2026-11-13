@@ -259,7 +259,7 @@ SMB         10.0.25.42      445    DC01             SYSVOL          READ        
 
 *Validating ranch credentials with NetExec*
 
-Valid, now with READ and WRITE on `Files` and READ on the logon shares.
+Valid, now with READ and WRITE on `Files`.
 
 ## BloodHound Enumeration
 
