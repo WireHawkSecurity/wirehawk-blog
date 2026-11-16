@@ -647,11 +647,11 @@ a:hover {
 }
 
 .searchbox input:focus {
-  border-color: var(--wh-red-light);
+  border-color: var(--wh-red);
 }
 
 .searchbox input:focus-visible {
-  border-color: var(--wh-red-light);
+  border-color: var(--wh-red);
   box-shadow: 0 0 0 2px rgba(var(--wh-red-rgb), 0.2);
 }
 

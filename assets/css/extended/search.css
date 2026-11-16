@@ -217,7 +217,7 @@
 
 .wh-hit-copy.wh-hit-copied {
   border-color: var(--wh-red);
-  color: var(--wh-red-light);
+  color: var(--wh-red);
 }
 
 @media (max-width: 768px) {
