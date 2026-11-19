@@ -96,6 +96,8 @@ hashcat.potfile
 # ─────────────────────────────────────────────────────────────
 WireHawk-Content-Style-Guide*.md
 WireHawk-Blog-Infrastructure-Guide*.md
+HANDOFF*.md
+wirehawk[-_]check*.py
 
 # ─────────────────────────────────────────────────────────────
 # Post production artifacts — deleted before publishing.
