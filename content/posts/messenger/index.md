@@ -469,6 +469,31 @@ password = "ChipmunKid314"
 
 # set the configurable to the hashed/salted value:
 c.NotebookApp.password = passwd(password)
+
+# Option 1. cleartext password to the terminal
+print
+print "Using password: %s" % password
+print
+
+# Option 2. write this to a private read-only file
+
+# get the security dir, or put it wherever else you want:
+from IPython.config import Application
+security_dir = Application.instance().profile_dir.security_dir
+
+# write the file
+fname = os.path.join(security_dir, 'notebook_passwd')
+with open(fname, 'w') as f:
+    f.write(password)
+
+# make it private
+import stat
+os.chmod(fname, stat.S_IRUSR|stat.S_IWUSR)
+
+# tell the terminal where it went:
+print
+print "Wrote password to private file: %s" % fname
+print
 ```
 
 ![Password in the notebook config](images/notebook-config-password.png)
