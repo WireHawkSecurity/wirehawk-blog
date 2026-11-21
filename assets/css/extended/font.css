@@ -482,7 +482,8 @@ a:hover {
 
 @media (max-width: 768px) {
   /* Matches the library's mobile card: the cover top-left, title, date, and
-     a two-line summary in one column beside it, badges full width beneath.
+     a two-line summary (three from 400px, see below) in one column beside
+     it, badges full width beneath.
      The footer drops out of the box tree so its two children take grid cells
      directly. */
   .latest-grid .post-entry {
@@ -545,6 +546,16 @@ a:hover {
 
 /* Below 360px the date beside the cover no longer fits on one line, so it is
    allowed to wrap rather than run past the card edge. */
+/* Third summary line from 400px, matching the library's mobile card. The
+   reason and the measurements are in the comment above the same breakpoint
+   in library.css. */
+@media (min-width: 400px) and (max-width: 768px) {
+  .latest-grid .entry-content p {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
+
 @media (max-width: 359px) {
   .latest-grid .entry-date {
     white-space: normal;

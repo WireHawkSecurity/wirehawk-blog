@@ -734,8 +734,8 @@
 
 /* ── Mobile card ──
    On phones the machine card sits top-left, and the title, date, and a
-   two-line summary stack in one column beside it, starting at the image's top
-   edge. The badges run full width beneath. One text column gives the card a
+   two-line summary (three from 400px, see below) stack in one column beside
+   it, starting at the image's top edge. The badges run full width beneath. One text column gives the card a
    single left edge; with only the title and date beside the image, they
    floated in empty space and the summary restarted at the card edge. The card
    is about 150px, against 367px for the old edge-to-edge cover. --wh-mthumb is
@@ -745,7 +745,7 @@
 @media (max-width: 768px) {
   /* The cover takes whatever width is left once the text column keeps 165px,
      enough for the longest title ("Lumon Industries" plus its emoji) on one
-     line: 156px on a 393px iPhone, 138px at 375px, capped at 168px on wider
+     line: 165px on a 402px iPhone 16 Pro, 156px at 393px, 138px at 375px, capped at 168px on wider
      phones so the text column still fills the cover's height. 237px is the
      page gutters (28px), card padding (30px), column gap (14px), and the
      165px text column. */
@@ -816,6 +816,20 @@
 
   .library-post-badges {
     grid-area: badges;
+  }
+}
+
+/* From 400px the cover is tall enough that two summary lines leave about a
+   line of empty space under them (402px iPhone 16 Pro, 430px and wider Plus
+   and Pro Max), so the summary takes a third line. The third line can end a
+   few pixels below the cover, and the card grows by that much. Below 400px
+   two lines already fill the cover's height. fitSummary() reads the clamp
+   from here, so the script needs no change. font.css applies the same
+   breakpoint to the homepage tiles. */
+@media (min-width: 400px) and (max-width: 768px) {
+  .library-post-summary {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 }
 
