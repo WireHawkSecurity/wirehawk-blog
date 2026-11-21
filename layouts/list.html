@@ -143,7 +143,7 @@
            time) so the two card styles match; other listings keep PaperMod's
            post_meta. */}}
     {{- if $.IsHome }}
-    <span class="entry-date">{{ .Date | time.Format ":date_long" }}&nbsp;·&nbsp;{{ .ReadingTime }}&nbsp;min</span>
+    <span class="entry-date">{{ .Date | time.Format ":date_long" }}&nbsp;·&nbsp;{{ partial "wh-reading-time.html" . }}&nbsp;min</span>
     {{- else }}
     {{- partial "post_meta.html" . -}}
     {{- end }}

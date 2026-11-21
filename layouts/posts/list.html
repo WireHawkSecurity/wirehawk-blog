@@ -55,7 +55,7 @@
       "cover": {{ $cover | jsonify | safeJS }},
       "cover2x": {{ $cover2x | jsonify | safeJS }},
       "date": {{ $p.Date.Format "January 2, 2006" | jsonify | safeJS }},
-      "readingTime": {{ $p.ReadingTime }},
+      "readingTime": {{ partial "wh-reading-time.html" $p }},
       "platforms": {{ $p.Params.platforms | default slice | jsonify | safeJS }},
       "tags": {{ $p.Params.tags | default slice | jsonify | safeJS }},
       "difficulty": {{ $p.Params.difficulty | default "" | jsonify | safeJS }}
@@ -371,7 +371,7 @@
     });
   }
 
-  // Pagefind centres its excerpt on the match, but the card clamps to two lines,
+  // Pagefind centres its excerpt on the match, but the card clamps to 2-4 lines,
   // so a term sitting fifteen words in never makes it onto the page. Drop the
   // run-up so the highlighted term lands on the first line.
   function trimToMatch(html) {

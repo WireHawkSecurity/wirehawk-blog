@@ -1,0 +1,21 @@
+{{- /* Reading time in whole minutes, used everywhere the site shows "N min":
+       the post meta line (post_meta.html), the homepage cards (list.html),
+       and the Posts library cards (posts/list.html).
+
+       Hugo's built-in .ReadingTime counts every word on the page at 213 wpm,
+       code blocks included. Walkthroughs are 50 to 67 percent tool output and
+       commands by that count, so it ran two to three times a reader's actual
+       reading time. This counts prose only: every <pre> block is removed
+       before counting (fenced code always renders inside one, see
+       _markup/render-codeblock.html), then the words are divided by 238 wpm,
+       the meta-analytic mean for adult silent reading of English non-fiction
+       (Brysbaert 2019), and rounded up. Inline code, captions and headings
+       still count, since a reader reads them. Any page with words shows at
+       least 1 min. */ -}}
+{{- $prose := replaceRE `(?s)<pre[^>]*>.*?</pre>` "" (string .Content) -}}
+{{- $words := countwords (plainify $prose) -}}
+{{- $minutes := 0 -}}
+{{- if gt $words 0 -}}
+  {{- $minutes = int (math.Ceil (div (float $words) 238)) -}}
+{{- end -}}
+{{- return $minutes -}}
